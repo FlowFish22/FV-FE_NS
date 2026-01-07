@@ -3,6 +3,7 @@
 #%% Demo for using an object
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.integrate as spi
 
 import finite_volume.finite_volume as fv
 
@@ -14,15 +15,12 @@ tf = 2.0
 initial_condition = fv.initial_condition.disp_Riemann
 case = fv.computational_case(N = 1000)
 #results = fv.discretization(case)
-
 #Discretize initial condition
 N = case.N
-
-# Plot the initial condition
 x = np.linspace(0, 1, num=int(1e2))
-(u0, rho0) = initial_condition(x)
+rho0 = initial_condition(x)[0]
 f, ax = plt.subplots(layout="constrained")
-ax.plot(x, u0, label=r"$u$")
+#ax.plot(x, u0, label=r"$u$")
 ax.plot(x, rho0, label=r"$\rho$")
 ax.set_xlabel("x")
 ax.set_title("Initial condition")
