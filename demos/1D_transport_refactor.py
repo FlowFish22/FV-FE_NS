@@ -1,6 +1,6 @@
 # Description of the PDE being solved
 
-# Demo for using an object
+#%% Demo for using an object
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -10,14 +10,14 @@ import finite_volume.finite_volume as fv
 # user_input = read('some_file.txt')
 
 # Option 2: input is in the demo script
-N = 500
 tf = 2.0
 initial_condition = fv.initial_condition.disp_Riemann
-case = fv.computational_case(N = 500)
+case = fv.computational_case(N = 1000)
 #results = fv.discretization(case)
 
 #Discretize initial condition
 N = case.N
+
 # Plot the initial condition
 x = np.linspace(0, 1, num=int(1e2))
 (u0, rho0) = initial_condition(x)
@@ -34,3 +34,5 @@ ax.legend()
 # plt.plot(x, u)
 
 
+
+# %%

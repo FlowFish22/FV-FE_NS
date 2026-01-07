@@ -17,7 +17,7 @@ class initial_condition:
 class computational_case:
     """Describes a computational case."""
 
-    def __init__(self, N = 500):
+    def __init__(self, N):
         """Constructor for computational_case class.
 
         Parameters
