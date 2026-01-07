@@ -1,4 +1,4 @@
-"""Some functions related to finite volume."""
+#genetrate staggered grids for 1D FV schemes
 
 import numpy as np
 import finite_volume.startup as strt

@@ -4,7 +4,7 @@ import math
 import numpy as np
 from matplotlib import pyplot as plt
 
-import finite_volume.fvm as fvm
+#import finite_volume.fvm as fvm
 import finite_volume.startup as strt
 import finite_volume.bdary as bnd
 
