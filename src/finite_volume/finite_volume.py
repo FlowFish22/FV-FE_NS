@@ -1,39 +1,37 @@
 # Example of what finite_volume could look like
 import numpy as np
+import scipy.integrate as spi
 
 
 class initial_condition:
     """Library of initial conditions."""
 
     @staticmethod
-    def shock_tube(x):
-        """Shock tube initial condition from (Toto et al, 2010)"""
-        u0 = np.sin(x)
-        v0 = np.cos(x)
-        rho0 = np.tan(x)
-        return (u0, v0, rho0)
+    def disp_Riemann(x):
+        """Dispersive Riemann problem from (Calgaro et al, 2024)"""
+        rho0 = 1.5 - 0.5 * np.tanh(x/0.2)
+        u0 = 0.0
+        return (rho0, u0)
 
 
 class computational_case:
     """Describes a computational case."""
 
-    def __init__(self, ul=1.0, name="default name"):
+    def __init__(self, N = 500):
         """Constructor for computational_case class.
 
         Parameters
         ----------
-        ul : float, optional
-            Left value
-        name : str, optional
-            Name of the computational case.
+        N : float,
+            number of control volumes.
         """
-        self.ul = 1.0
-        self.name = name
+        self.N = N
 
-    def print_name(self):
-        print(self.name)
-
-
-def discretization(case: computational_case):
-    """Perform the computation for the given case."""
-    return case.ul
+def discretization(case, data):
+    """Perform the computation for the given case.
+    Parameters
+    ----------
+    computational_case: parametrs/object specific
+                        to the computational case
+    initial_condition: initial condition under consiaderation"""
+    

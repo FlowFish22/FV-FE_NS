@@ -10,18 +10,19 @@ import finite_volume.finite_volume as fv
 # user_input = read('some_file.txt')
 
 # Option 2: input is in the demo script
-ul, ur = 1.0, 2.0
+N = 500
 tf = 2.0
-initial_condition = fv.initial_condition.shock_tube
-case = fv.computational_case(ul=ul, name="My first case")
-results = fv.discretization(case)
+initial_condition = fv.initial_condition.disp_Riemann
+case = fv.computational_case(N = 500)
+#results = fv.discretization(case)
 
+#Discretize initial condition
+N = case.N
 # Plot the initial condition
 x = np.linspace(0, 1, num=int(1e2))
-(u0, v0, rho0) = initial_condition(x)
+(u0, rho0) = initial_condition(x)
 f, ax = plt.subplots(layout="constrained")
 ax.plot(x, u0, label=r"$u$")
-ax.plot(x, v0, label=r"$v$")
 ax.plot(x, rho0, label=r"$\rho$")
 ax.set_xlabel("x")
 ax.set_title("Initial condition")
@@ -31,3 +32,5 @@ ax.legend()
 # u = results.u
 # x = results.x
 # plt.plot(x, u)
+
+
