@@ -9,7 +9,7 @@ class initial_condition:
     @staticmethod
     def disp_Riemann(x):
         """Dispersive Riemann problem from (Calgaro et al, 2024)"""
-        rho0 = 2.0 #(x) #.5 - 0.5 * np.tanh(x/0.2)
+        rho0 = 2.0 * x #.5 - 0.5 * np.tanh(x/0.2)
         u0 = 1.0
         return (rho0, u0)
 
