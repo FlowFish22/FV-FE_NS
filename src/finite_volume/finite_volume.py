@@ -11,7 +11,7 @@ class initial_condition:
         """Dispersive Riemann problem from (Calgaro et al, 2024)"""
         rho0 = 2.0 * x #.5 - 0.5 * np.tanh(x/0.2)
         u0 = 1.0 * x
-        return (rho0, u0)
+        return (rho0,u0)
 
 
 class computational_case:
