@@ -14,13 +14,11 @@ import finite_volume.finite_volume as fv
 tf = 2.0
 initial_condition = fv.initial_condition.disp_Riemann
 case = fv.computational_case(N = 1000)
-#results = fv.discretization(case)
 #Discretize initial condition
 N = case.N
 x = np.linspace(0, 1, num=int(1e2))
-rho0 = initial_condition(x)
-f, ax = plt.subplots(layout="constrained")
-#x.plot(x, u0, label=r"$u$")
+(rho0, u0) = initial_condition(x)
+ax = plt.subplots(layout="constrained")
 ax.plot(x, rho0, label=r"$\rho$")
 ax.set_xlabel("x")
 ax.set_title("Initial condition")

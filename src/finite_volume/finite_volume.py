@@ -10,8 +10,8 @@ class initial_condition:
     def disp_Riemann(x):
         """Dispersive Riemann problem from (Calgaro et al, 2024)"""
         rho0 = 2.0 * x #.5 - 0.5 * np.tanh(x/0.2)
-        #0 = 1.0
-        return rho0
+        u0 = 1.0 * x
+        return (rho0, u0)
 
 
 class computational_case:
