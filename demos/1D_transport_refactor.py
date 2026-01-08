@@ -18,9 +18,9 @@ case = fv.computational_case(N = 1000)
 #Discretize initial condition
 N = case.N
 x = np.linspace(0, 1, num=int(1e2))
-rho0 = initial_condition(x)[0]
+(rho0, u0) = initial_condition(x)
 f, ax = plt.subplots(layout="constrained")
-#ax.plot(x, u0, label=r"$u$")
+ax.plot(x, u0, label=r"$u$")
 ax.plot(x, rho0, label=r"$\rho$")
 ax.set_xlabel("x")
 ax.set_title("Initial condition")
