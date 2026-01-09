@@ -41,8 +41,8 @@ ax.legend()
 """implementing periodic boundary function; populating the ghost cells"""
 bdary = fv.boundary_condition.per_bd
 num_ghost = case.ng #number of ghost cells on each side
-rho_init = bdary(rho_init, num_ghost) #primal ghost cells populated for rho^-1
-u_0 = bdary(u_0, num_ghost) #dual ghost cells populated for u_0
+rho_init_comp = bdary(rho_init, num_ghost) #primal ghost cells populated for rho^-1
+u_0_comp = bdary(u_0, num_ghost) #dual ghost cells populated for u_0
 
 
 
