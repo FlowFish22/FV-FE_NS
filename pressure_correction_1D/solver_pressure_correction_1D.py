@@ -13,7 +13,7 @@ import finite_volume.finite_volume as fv
 # Option 2: input is in the demo script
 tf = 2.0
 initial_condition = fv.initial_condition.disp_Riemann
-case = fv.computational_case(a =-20.0, b = 20.0, Tf = 1.0, N = 50, dt = 0.00001)
+case = fv.computational_case(a =-20.0, b = 20.0, Tf = 1.0, N = 50, dt = 0.00001, ng = 1)
 "-------initialization of the scheme--------------"
 a = case.a
 b = case.b
@@ -37,6 +37,14 @@ ax.plot(x_dual, u_0, label="u")
 ax.set_xlabel("x")
 ax.set_title("Initial condition")
 ax.legend()
+#------------------------------------------------------------------------------------------------------------------
+"""implementing periodic boundary function; populating the ghost cells"""
+bdary = fv.boundary_condition.per_bd
+num_ghost = case.ng #number of ghost cells on each side
+rho_init = bdary(rho_init, num_ghost) #primal ghost cells populated for rho^-1
+u_0 = bdary(u_0, num_ghost) #dual ghost cells populated for u_0
+
+
 
 # Plot the result
 # u = results.u
