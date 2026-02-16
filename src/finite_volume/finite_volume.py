@@ -1,5 +1,6 @@
 # Example of what finite_volume could look like
 #%%
+import math
 import numpy as np
 import scipy.integrate as spi
 
@@ -54,7 +55,16 @@ class boundary_condition:
         d[1:-1] += dis
         return d
     
+class convective_flux:
+    """To implement different discrete flux"""
 
+    @staticmethod
+    def flx_upwind(r1, r2, u):
+        """UPWIND flux"""
+        u_pos = 0.5 * (math.fabs(u) + u)
+        u_neg = 0.5 * (math.fabs(u) - u)
+        flx = r1 * u_pos + r2 * u_neg
+        return flx
 
 def discretization(case, data):
     """Perform the computation for the given case.
