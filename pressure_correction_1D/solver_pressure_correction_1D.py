@@ -1,9 +1,12 @@
 # Description of the PDE being solved
 
 #%% Demo for using an object
+import math
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.integrate as spi
+import scipy.sparse as sparse
+import scipy.sparse.linalg as spm
 
 import finite_volume.finite_volume as fv
 
@@ -11,17 +14,26 @@ import finite_volume.finite_volume as fv
 # user_input = read('some_file.txt')
 
 # Option 2: input is in the demo script
+#Positive and negative parts of a real number
+def pos(a):
+    b = 0.5 * (math.fabs(a) + a)
+    return b
+def neg(a):
+    b = 0.5 * (math.fabs(a) - a)
+    return b
 tf = 2.0
 kappa = 0.5
 nu = 0.1
 initial_condition = fv.initial_condition.disp_Riemann
-case = fv.computational_case(a =-20.0, b = 20.0, Tf = 1.0, N = 50, dt = 0.00001, ng = 1)
+case = fv.computational_case(a =-20.0, b = 20.0, Tf = 1.0, N = 100, dt = 0.00001, ng = 1)
 "-------initialization of the scheme--------------"
 a = case.a
 b = case.b
 N = case.N
 l = b - a #length of the domain
 cell_size = l/N #uniform cell size
+dt = case.dt
+lda = dt/cell_size
 
 #Discretize the initial density by taking cell averages on PRIMAL CELLS
 prim_edge = np.array([(a + i * cell_size) for i in range(0, N+1)])#edges of N uniform subintervals of (a,b)/edges of the primal cells including bdary a,b
@@ -45,8 +57,8 @@ ax.plot(x_dual, w_0, label=r"$w_0$")
 ax.set_xlabel("x")
 ax.set_title("Initial condition")
 ax.legend()
-#------------------------------------------------------------------------------------------------------------------
 #%%
+#------------------------------------------------------------------------------------------------------------------
 """implementing periodic boundary condition for the initial data; populating the ghost cells"""
 bdary = fv.boundary_condition.per_bd
 num_ghost = case.ng #number of ghost cells on each side
@@ -56,11 +68,24 @@ Dx_rho_init = bdary(Dx_rho_init, num_ghost)
 w_0 = bdary(w_0, num_ghost)
 #-------------------------------------------------------------------------------------------------------------------
 """Update steps"""
-#Compute rho^0 (PRIMAL CELLS)
+#Compute rho^0 (PRIMAL CELLS): solve a linear system
 f_up = fv.convective_flux.flx_upwind
-for i in range(0, N):
-        Flx = f_up(u_old[i], u_old[i-1]) if a>=0 else f_up(u_old[i+1], u_old[i]) #upwind flux
-        u[i] = u_old[i] - dt * Flx
+#Entries of the sparse (M-)matrix A corresponding to the update for rho^0
+A = np.zeros(shape=(N,N))
+for i in range(0,N):
+    for j in range(0,N):
+        if j==i:
+            A[i][j] = 1.0 + lda * (pos(w_0[i+1]) + neg(w_0[i])) + kappa * nu * (2.0/cell_size) * lda
+        elif j == i+1:
+            A[i][j] = - lda * neg(w_0[i+1]) - (kappa * nu * lda)/cell_size
+        elif j == i-1:
+            A[i][j] = - lda * pos(w_0[i]) - (kappa * nu * lda)/cell_size
+        else:
+            A[i][j] = 0.0
+
+
+
+
 
 
 # Plot the result
@@ -71,3 +96,5 @@ for i in range(0, N):
 
 
 
+
+#%%
