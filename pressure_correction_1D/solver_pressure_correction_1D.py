@@ -25,7 +25,7 @@ tf = 2.0
 kappa = 0.5
 nu = 0.1
 initial_condition = fv.initial_condition.disp_Riemann
-case = fv.computational_case(a =-20.0, b = 20.0, Tf = 1.0, N = 100, dt = 0.00001, ng = 1)
+case = fv.computational_case(a =-20.0, b = 20.0, Tf = 1.0, N = 50, dt = 0.00001, ng = 1)
 "-------initialization of the scheme--------------"
 a = case.a
 b = case.b
@@ -57,34 +57,32 @@ ax.plot(x_dual, w_0, label=r"$w_0$")
 ax.set_xlabel("x")
 ax.set_title("Initial condition")
 ax.legend()
-#%%
 #------------------------------------------------------------------------------------------------------------------
 """implementing periodic boundary condition for the initial data; populating the ghost cells"""
 bdary = fv.boundary_condition.per_bd
 num_ghost = case.ng #number of ghost cells on each side
-rho_init = bdary(rho_init, num_ghost) #primal ghost cells populated for rho^-1
-u_0 = bdary(u_0, num_ghost) #dual ghost cells populated for u_0
-Dx_rho_init = bdary(Dx_rho_init, num_ghost)
 w_0 = bdary(w_0, num_ghost)
 #-------------------------------------------------------------------------------------------------------------------
-"""Update steps"""
-#Compute rho^0 (PRIMAL CELLS): solve a linear system
+"""-----------------------Update steps---------------------"""
+"""Compute rho^0 (PRIMAL CELLS): solve a linear system"""
 f_up = fv.convective_flux.flx_upwind
-#Entries of the sparse (M-)matrix A corresponding to the update for rho^0
+#-------------Entries of the sparse (M-)matrix A corresponding to the update for rho^0------------------------------
 A = np.zeros(shape=(N,N))
 for i in range(0,N):
     for j in range(0,N):
         if j==i:
-            A[i][j] = 1.0 + lda * (pos(w_0[i+1]) + neg(w_0[i])) + kappa * nu * (2.0/cell_size) * lda
+            A[i][j] += 1.0 + lda * (pos(w_0[i+1]) + neg(w_0[i])) + kappa * nu * (2.0/cell_size) * lda
         elif j == i+1:
-            A[i][j] = - lda * neg(w_0[i+1]) - (kappa * nu * lda)/cell_size
+            A[i][j] += - lda * neg(w_0[i+1]) - (kappa * nu * lda)/cell_size
         elif j == i-1:
-            A[i][j] = - lda * pos(w_0[i]) - (kappa * nu * lda)/cell_size
-        else:
-            A[i][j] = 0.0
-
-
-
+            A[i][j] += - lda * pos(w_0[i]) - (kappa * nu * lda)/cell_size
+A[0][N-1] += - lda * pos(w_0[N]) - (kappa * nu * lda)/cell_size
+A[N-1][0] += - lda * neg(w_0[0]) - (kappa * nu * lda)/cell_size
+#--------------------------------------------------------------------------------------------------------------------
+#------------Solving for rho^0 from the corresponding linear system--------------------------------------------------
+rho_0 = spm.spsolve(A, rho_init)
+ax.plot(x_prim, rho_0, label=r"$\rho^0$")
+ax.legend()
 
 
 
