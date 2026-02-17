@@ -80,7 +80,7 @@ for i in range(0,N):
 A[0][N-1] += - lda * pos(w_0[N]) - (kappa * nu * lda)/cell_size
 A[N-1][0] += - lda * neg(w_0[0]) - (kappa * nu * lda)/cell_size
 #--------------------------------------------------------------------------------------------------------------------
-#------------Solving for rho^0 from the corresponding linear system--------------------------------------------------
+#------------Solving for rho^0 from the corresponding linear problem--------------------------------------------------
 rho_0 = spm.spsolve(A, rho_init)
 ax.plot(x_prim, rho_0, label=r"$\rho^0$")
 ax.legend()
