@@ -24,6 +24,7 @@ def neg(a):
 tf = 2.0
 kappa = 0.5
 nu = 0.1
+gamma = 1.4
 initial_condition = fv.initial_condition.disp_Riemann
 case = fv.computational_case(a =-20.0, b = 20.0, Tf = 1.0, N = 50, dt = 0.00001, ng = 1)
 "-------initialization of the scheme--------------"
@@ -83,13 +84,16 @@ A[N-1][0] += - lda * neg(w_0[0]) - (kappa * nu * lda)/cell_size
 rho_0 = spm.spsolve(A, rho_init)
 ax.plot(x_prim, rho_0, label=r"$\rho^0$")
 ax.legend()
+#-------------Time loop for updates------------------------
+#Compute dual average of the discrete mass on the DUAL CELLS
+rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
+rho_0_d = np.array([(0.5 * (rho_0[i+1]+rho_0[i])) for i in range(0,N-1)])
+#Pressure scaling step: compute the scaled pressure gradient on the DUAL CELLS
+sc_pr_grad = np.array([(math.sqrt(rho_0_d[i]/rho_init_d[i]) * (rho_0[i+1]**gamma - rho_0[i]**gamma)/cell_size) for i in range(0,N-1)])
+ax.plot(x_dual, sc_pr_grad, label=r"scaled pressure")
+ax.legend()
+#Prediction step: solve a linear system to get the intermediate effective vel. and the drift vel.
 
-
-
-# Plot the result
-# u = results.u
-# x = results.x
-# plt.plot(x, u)
 
 
 
