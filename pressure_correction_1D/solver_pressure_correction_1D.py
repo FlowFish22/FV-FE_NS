@@ -59,7 +59,7 @@ ax.set_xlabel("x")
 ax.set_title("Initial condition")
 ax.legend()
 #------------------------------------------------------------------------------------------------------------------
-"""implementing periodic boundary condition for the initial data; populating the ghost cells"""
+"""Function populating the ghost cells for periodic boundary condition"""
 bdary = fv.boundary_condition.per_bd
 num_ghost = case.ng #number of ghost cells on each side
 w_0 = bdary(w_0, num_ghost)
@@ -90,12 +90,18 @@ rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)
 rho_0_d = np.array([(0.5 * (rho_0[i+1]+rho_0[i])) for i in range(0,N-1)])
 #Pressure scaling step: compute the scaled pressure gradient on the DUAL CELLS
 sc_pr_grad = np.array([(math.sqrt(rho_0_d[i]/rho_init_d[i]) * (rho_0[i+1]**gamma - rho_0[i]**gamma)/cell_size) for i in range(0,N-1)])
-ax.plot(x_dual, sc_pr_grad, label=r"scaled pressure")
+ax.plot(x_dual, sc_pr_grad, label=r"scaled pressure")                                                                                                                             
 ax.legend()
 #Prediction step: solve a linear system to get the intermediate effective vel. and the drift vel.
-
-
-
+#------------------------------------------------------------------------------------------------
+#Populating primal ghost cells for rho_0
+rho_0 = bdary(rho_0, num_ghost)
+#Effective velocity part of the numerical flux on the interfaces including external edges
+F_ev = np.array([(fv.convective_flux.flx_upwind(rho_0[i], rho_0[i+1],w_0[i])) for i in range(0,N+1)])
+#Drift velocity part of the numerical flux on the interfaces including external edges
+F_dv = np.array([(rho_0[i+1] - rho_0[i])/cell_size for i in range(0,N+1)])
+#Flux = F_ev - kappa * nu * F_dv
+Flx = np.array([(F_ev[i] - kappa * nu * F_dv[i]) for i in range(0,N+1)])
 
 
 

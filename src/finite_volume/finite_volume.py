@@ -63,7 +63,7 @@ class convective_flux:
         """UPWIND flux"""
         u_pos = 0.5 * (math.fabs(u) + u)
         u_neg = 0.5 * (math.fabs(u) - u)
-        flx = r1 * u_pos + r2 * u_neg
+        flx = r1 * u_pos - r2 * u_neg
         return flx
 
 def discretization(case, data):
