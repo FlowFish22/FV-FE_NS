@@ -132,6 +132,7 @@ for i in range(0,N-1):
         elif j == i-1:
             W_1[i][j] += - lda * (1.0/4.0) * (Flx[i+1] + Flx[i]) - lda * (kappa * nu/cell_size) * rho_0[i+1]
             V_1[i][j] += lda * (1.0/cell_size) * rho_0[i+1]
+matrix_lhs = np.array(([W,V], [V_1,W_1]))
 
 
 #%%
