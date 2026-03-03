@@ -3,6 +3,7 @@
 import math
 import numpy as np
 import scipy.integrate as spi
+from scipy.sparse import diags, csr_matrix, coo_matrix
 
 
 class initial_condition:
@@ -65,14 +66,60 @@ class convective_flux:
         u_neg = 0.5 * (math.fabs(u) - u)
         flx = r1 * u_pos - r2 * u_neg
         return flx
+class solver_assembly:
+    """To assemble sparse matrices for explicit and implicit solvers"""
 
-def discretization(case, data):
-    """Perform the computation for the given case.
-    Parameters
-    ----------
-    computational_case: parametrs/object specific
-                        to the computational case
-    initial_condition: initial condition under consiaderation"""
+    def primal_linsolv_periodic(a, k, c, f, g):
+        """
+        Build NxN periodic 3-point stencil matrix for solving unknowns on prilal:
     
+        center[i] = 1 + k*(a[i] + a[i+1]) + c
+        left[i]   = -k*a[i] - c
+        right[i]  = -k*a[i+1] - c
+        
+        with periodic wrap:
+            a[N] = a[0]
 
+        a[i] corresponds to the interface between the cells i, and i+1
+        """
+        Nc = len(a) #Internal edges
+        N = Nc + 1 #Cells
+
+        i = np.arange(N)
+
+        # periodic neighbors (nodes)
+        ip = (i + 1) % N
+        im = (i - 1) % N
+
+        # periodic cell indices
+        iR = i % Nc
+        iL = (i - 1) % Nc
+        
+        # each row has exactly 3 entries (allocated in COO structure)
+        rows = np.repeat(np.arange(N), 3)
+
+        cols = np.empty(3*N, dtype=int)
+        data = np.empty(3*N)
+
+        cols[0::3] = im
+        cols[1::3] = i
+        cols[2::3] = ip
+
+        # left entries
+        data[0::3] = (
+            -k * g(a[iL]) - c
+        )
+
+        # center entries
+        data[1::3] = (
+            1.0 + k * (f(a[iL]) + g(a[iR])) + 2.0 * c
+            
+        )
+
+        # right entries
+        data[2::3] = (
+            -k * f(a[iR]) - c
+            
+         )
+        return coo_matrix((data, (rows, cols)), shape=(N, N)).tocsr()
 # %%

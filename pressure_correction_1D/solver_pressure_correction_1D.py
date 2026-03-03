@@ -16,11 +16,9 @@ import finite_volume.finite_volume as fv
 # Option 2: input is in the demo script
 #Positive and negative parts of a real number
 def pos(a):
-    b = 0.5 * (math.fabs(a) + a)
-    return b
+    return np.maximum(a,0)
 def neg(a):
-    b = 0.5 * (math.fabs(a) - a)
-    return b
+    return np.minimum(a,0)
 tf = 2.0
 kappa = 0.5
 nu = 0.1
@@ -35,6 +33,7 @@ l = b - a #length of the domain
 cell_size = l/N #uniform cell size
 dt = case.dt
 lda = dt/cell_size
+c = (kappa * nu * lda)/cell_size
 
 #Discretize the initial density by taking cell averages on PRIMAL CELLS
 prim_edge = np.array([(a + i * cell_size) for i in range(0, N+1)])#edges of N uniform subintervals of (a,b)/edges of the primal cells including bdary a,b
@@ -58,32 +57,23 @@ ax.plot(x_dual, w_0, label=r"$w_0$")
 ax.set_xlabel("x")
 ax.set_title("Initial condition")
 ax.legend()
-#------------------------------------------------------------------------------------------------------------------
-"""Function populating the ghost cells for periodic boundary condition"""
-bdary = fv.boundary_condition.per_bd
-num_ghost = case.ng #number of ghost cells on each side
-w_0 = bdary(w_0, num_ghost)
 #-------------------------------------------------------------------------------------------------------------------
 """-----------------------Update steps---------------------"""
 """Compute rho^0 (PRIMAL CELLS): solve a linear system"""
 f_up = fv.convective_flux.flx_upwind
 #-------------Entries of the sparse (M-)matrix A corresponding to the update for rho^0------------------------------
-A = np.zeros(shape=(N,N))
-for i in range(0,N):
-    for j in range(0,N):
-        if j==i:
-            A[i][j] += 1.0 + lda * (pos(w_0[i+1]) + neg(w_0[i])) + kappa * nu * (2.0/cell_size) * lda
-        elif j == i+1:
-            A[i][j] += - lda * neg(w_0[i+1]) - (kappa * nu * lda)/cell_size
-        elif j == i-1:
-            A[i][j] += - lda * pos(w_0[i]) - (kappa * nu * lda)/cell_size
-A[0][N-1] += - lda * pos(w_0[N]) - (kappa * nu * lda)/cell_size
-A[N-1][0] += - lda * neg(w_0[0]) - (kappa * nu * lda)/cell_size
+p_linsolv = fv.solver_assembly.primal_linsolv_periodic
+A = p_linsolv(w_0, lda, c, neg, pos)
 #--------------------------------------------------------------------------------------------------------------------
 #------------Solving for rho^0 from the corresponding linear problem--------------------------------------------------
 rho_0 = spm.spsolve(A, rho_init)
 ax.plot(x_prim, rho_0, label=r"$\rho^0$")
 ax.legend()
+#------------------------------------------------------------------------------------------------------------------
+"""Function populating the ghost cells for periodic boundary condition"""
+bdary = fv.boundary_condition.per_bd
+num_ghost = case.ng #number of ghost cells on each side
+w_0 = bdary(w_0, num_ghost)
 #-------------Time loop for updates------------------------
 #Compute dual average of the discrete mass on the DUAL CELLS
 rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
