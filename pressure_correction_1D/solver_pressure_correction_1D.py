@@ -99,10 +99,6 @@ V1 = d_linsolv_dif(rho_0, d) #v part of tilde{w} eqn
 V2 = d_linsolv(flx, rho_0, c1, c3) #v part of v eqn
 W2 = d_linsolv_dif(rho_0, lda2) #tilde{w} part of w eqn
 
-matrix_lhs = np.array(([W1,V1], [V2,W2]))
-vector_lhs = np.array([(sc_pr_grad - rho_init_d * w_0), rho_init_d * v_init])
-
-[tw, v] = np.linalg.solve(matrix_lhs, vector_lhs)
 
 
 #%%
