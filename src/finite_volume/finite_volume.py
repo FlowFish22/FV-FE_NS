@@ -71,7 +71,7 @@ class solver_assembly:
 
     def primal_linsolv_periodic(a, k, c, f, g):
         """
-        Build NxN periodic 3-point stencil matrix for solving unknowns on prilal:
+        Build NxN periodic 3-point stencil matrix for solving unknowns on primal cells:
     
         center[i] = 1 + k*(a[i] + a[i+1]) + c
         left[i]   = -k*a[i] - c
@@ -122,4 +122,18 @@ class solver_assembly:
             
          )
         return coo_matrix((data, (rows, cols)), shape=(N, N)).tocsr()
+    
+    def dual_linsolv_dif(fl, rh, c1, c2):
+        """
+        Build NxN periodic 3-point stencil matrix for solving unknowns on dual cells:
+    
+        center[i] = 1 + k*(a[i] + a[i+1]) + c
+        left[i]   = -k*a[i] - c
+        right[i]  = -k*a[i+1] - c
+        
+        with periodic wrap:
+            a[N] = a[0]
+
+        a[i] corresponds to the interface between the cells i, and i+1
+        """
 # %%
