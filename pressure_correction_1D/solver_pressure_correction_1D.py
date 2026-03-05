@@ -33,6 +33,7 @@ l = b - a #length of the domain
 cell_size = l/N #uniform cell size
 dt = case.dt
 lda = dt/cell_size
+lda2 = dt/(cell_size * cell_size)
 c = (kappa * nu * lda)/cell_size
 
 #Discretize the initial density by taking cell averages on PRIMAL CELLS
@@ -42,17 +43,17 @@ rho_init = np.array([spi.quad(lambda x: (1.0/cell_size) * initial_condition(x)[0
 #Discretize the initial velocity by taking cell averages on DUAL CELLS
 x_dual = np.array([(prim_edge[i+1]) for i in range(0, N-1)]) #dual cell centres/internal edges/primal cell edges lying inside (a,b) hence excluding a,b
 u_0 = np.array([spi.quad(lambda x: (1.0/cell_size) * initial_condition(x)[1], x_prim[i], x_prim[i+1])[1] for i in range(0,N-1)])
-#Compute the DISCRETE x-DERIVATIVE of the initial density (initial DRIFT VELOCITY) on DUAL CELLS
-Dx_rho_init = np.array([((rho_init[i+1]-rho_init[i])/cell_size) for i in range(0,N-1)])
+#Compute the initial DRIFT VELOCITY) on DUAL CELLS
+v_init = np.array([((rho_init[i+1]- rho_init[i])/(cell_size * 0.5 * (rho_init[i+1] + rho_init[i]))) for i in range(0,N-1)])
 #Compute the discrete EFFECTIVE VELOCITY on DUAL CELLS
-w_0 = np.array([u_0[i] - kappa * nu * Dx_rho_init[i] for i in range(0,N-1)])
+w_0 = np.array([u_0[i] - kappa * nu * v_init[i] for i in range(0,N-1)])
 #----------------------------------plot discretized initial data--------------------------------------------------
 #x = np.linspace(0, 1, num=int(1e2))
 #rho0 = initial_condition(x)[1]
 f, ax = plt.subplots(layout="constrained")
 ax.plot(x_prim, rho_init, label=r"$\rho$")
 ax.plot(x_dual, u_0, label=r"$u_0$")
-ax.plot(x_dual, Dx_rho_init, label=r"$\partial_x \rho$")
+ax.plot(x_dual, v_init, label=r"$\partial_x \rho$")
 ax.plot(x_dual, w_0, label=r"$w_0$")
 ax.set_xlabel("x")
 ax.set_title("Initial condition")
@@ -70,11 +71,6 @@ rho_0 = spm.spsolve(A, rho_init)
 ax.plot(x_prim, rho_0, label=r"$\rho^0$")
 ax.legend()
 #------------------------------------------------------------------------------------------------------------------
-"""Function populating the ghost cells for periodic boundary condition"""
-bdary = fv.boundary_condition.per_bd
-num_ghost = case.ng #number of ghost cells on each side
-w_0 = bdary(w_0, num_ghost)
-#-------------Time loop for updates------------------------
 #Compute dual average of the discrete mass on the DUAL CELLS
 rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
 rho_0_d = np.array([(0.5 * (rho_0[i+1]+rho_0[i])) for i in range(0,N-1)])
@@ -84,45 +80,27 @@ ax.plot(x_dual, sc_pr_grad, label=r"scaled pressure")
 ax.legend()
 #Prediction step: solve a linear system to get the intermediate effective vel. and the drift vel.
 #------------------------------------------------------------------------------------------------
-#Populating primal ghost cells for rho_0
-rho_0 = bdary(rho_0, num_ghost)
-#Effective velocity part of the numerical flux on the interfaces including external edges
-F_ev = np.array([(fv.convective_flux.flx_upwind(rho_0[i], rho_0[i+1],w_0[i])) for i in range(0,N+1)])
-#Drift velocity part of the numerical flux on the interfaces including external edges
-F_dv = np.array([(rho_0[i+1] - rho_0[i])/cell_size for i in range(0,N+1)])
+#Effective velocity part of the numerical flux on the interfaces excluding external edges
+f_ev = np.array([(fv.convective_flux.flx_upwind(rho_0[i], rho_0[i+1],w_0[i])) for i in range(0,N-1)])
+#Drift velocity part of the numerical flux on the interfaces excluding external edges
+f_dv = np.array([(rho_0[i+1] - rho_0[i])/cell_size for i in range(0,N-1)])
 #Flux = F_ev - kappa * nu * F_dv
-Flx = np.array([(F_ev[i] - kappa * nu * F_dv[i]) for i in range(0,N+1)])
-#Matrix blocks corresponding to the coupled linear system for w-v:
-#-----------------------------------------------------------------
-#w-update: W: coeffs of w, V: coeffs of v
-W = np.zeros(shape=(N-1, N-1))
-V = np.zeros(shape=(N-1, N-1))
-for i in range(0,N-1):
-    for j in range(0,N-1):
-        if j==i:
-            W[i][j] += 1.0 + lda * (1.0/4.0) * (Flx[i+2] - Flx[i]) + lda * ((1.0 - kappa) * nu/cell_size) * (rho_0[i+2] + rho_0[i+1])
-            V[i][j] += -lda * ((1.0 - kappa) * nu * nu * kappa/cell_size) * (rho_0[i+2] + rho_0[i+1])
-        elif j == i+1:
-            W[i][j] += lda * (1.0/4.0) * (Flx[i+2] + Flx[i+1]) - lda * ((1.0 - kappa) * nu/cell_size) * rho_0[i+2]
-            V[i][j] += lda * ((1.0 - kappa) * nu * nu * kappa/cell_size) * rho_0[i+2]
-        elif j == i-1:
-            W[i][j] += - lda * (1.0/4.0) * (Flx[i+1] + Flx[i]) - lda * ((1.0 - kappa) * nu/cell_size) * rho_0[i+1]
-            V[i][j] += lda * ((1.0 - kappa) * nu * nu * kappa/cell_size) * rho_0[i+1]
-#v-update: W_1: coeffs of v, V_1: coeffs of w
-W_1 = np.zeros(shape=(N-1, N-1))
-V_1 = np.zeros(shape=(N-1, N-1))
-for i in range(0,N-1):
-    for j in range(0,N-1):
-        if j==i:
-            W_1[i][j] += 1.0 + lda * (1.0/4.0) * (Flx[i+2] - Flx[i]) + lda * (kappa * nu/cell_size) * (rho_0[i+2] + rho_0[i+1])
-            V_1[i][j] += -lda * (1.0/cell_size) * (rho_0[i+2] + rho_0[i+1])
-        elif j == i+1:
-            W_1[i][j] += lda * (1.0/4.0) * (Flx[i+2] + Flx[i+1]) - lda * (kappa * nu/cell_size) * rho_0[i+2]
-            V_1[i][j] += lda * (1.0/cell_size) * rho_0[i+2]
-        elif j == i-1:
-            W_1[i][j] += - lda * (1.0/4.0) * (Flx[i+1] + Flx[i]) - lda * (kappa * nu/cell_size) * rho_0[i+1]
-            V_1[i][j] += lda * (1.0/cell_size) * rho_0[i+1]
-matrix_lhs = np.array(([W,V], [V_1,W_1]))
+flx = np.array([(f_ev[i] - kappa * nu * f_dv[i]) for i in range(0,N-1)])
+c1 = lda * (1.0/4.0)
+c2 = nu * (1.0 - kappa) * lda2
+c3 = kappa * nu
+d = kappa * nu * nu * (1 - kappa) * lda2
+d_linsolv = fv.solver_assembly.dual_linsolv
+d_linsolv_dif = fv.solver_assembly.dual_linsolv_dif
+
+"""Matrix blocks corresponding to the linear system for solving tilde{w} and v"""
+W1 = d_linsolv(flx, rho_0, c1, c2) #tilde{w} part of tilde{w} eqn
+V1 = d_linsolv_dif(rho_0, d) #v part of tilde{w} eqn
+V2 = d_linsolv(flx, rho_0, c1, c3) #v part of v eqn
+W2 = d_linsolv_dif(rho_0, lda2) #tilde{w} part of w eqn
+
+matrix_lhs = np.array(([W1,V1], [V2,W2]))
+vector_lhs = np.array([(sc_pr_grad - rho_init_d * w_0), rho_init_d * v_init])
 
 
 #%%

@@ -123,17 +123,79 @@ class solver_assembly:
          )
         return coo_matrix((data, (rows, cols)), shape=(N, N)).tocsr()
     
-    def dual_linsolv_dif(fl, rh, c1, c2):
+    def dual_linsolv(flx, rh, c1, c2):
         """
-        Build NxN periodic 3-point stencil matrix for solving unknowns on dual cells:
-    
-        center[i] = 1 + k*(a[i] + a[i+1]) + c
-        left[i]   = -k*a[i] - c
-        right[i]  = -k*a[i+1] - c
-        
+        Build NxN periodic 3-point stencil matrix for solving unknowns on dual cells
         with periodic wrap:
-            a[N] = a[0]
-
-        a[i] corresponds to the interface between the cells i, and i+1
+    
         """
+        N = len(flx) #len(rh) = N+1
+
+        i = np.arange(N)
+        ip = (i + 1) % N
+        im = (i - 1) % N
+
+        rows = np.repeat(i, 3)
+
+        cols = np.empty(3*N, dtype=int)
+        cols[0::3] = im
+        cols[1::3] = i
+        cols[2::3] = ip
+
+        data = np.empty(3*N)
+
+        #left
+        data[0::3] = (
+            - c1 * (flx[i] + flx[im]) - c2 * rh[i]
+        )
+
+        #center
+        data[1::3] = (
+            1.0 + c1 * (flx[ip] - flx[im]) + c2 * (rh[i] + rh[i+1])
+        )
+
+        #right
+        data[2::3] = (
+            c1 * (flx[ip] + flx[i]) - c2 * rh[i+1]
+        )
+
+        return coo_matrix((data, (rows, cols)), shape=(N, N)).tocsr()
+
+    def dual_linsolv_dif(rh, c):
+        """
+        Build NxN periodic 3-point stencil matrix for solving unknowns on dual cells in diffusion terms
+        with periodic wrap:
+    
+        """
+        N = len(rh) - 1 #len(rh) = N+1
+
+        i = np.arange(N)
+        ip = (i + 1) % N
+        im = (i - 1) % N
+
+        rows = np.repeat(i, 3)
+
+        cols = np.empty(3*N, dtype=int)
+        cols[0::3] = im
+        cols[1::3] = i
+        cols[2::3] = ip
+
+        data = np.empty(3*N)
+
+        #left
+        data[0::3] = (
+             c * rh[i]
+        )
+
+        #center
+        data[1::3] = (
+           - c * (rh[i] + rh[i+1])
+        )
+
+        #right
+        data[2::3] = (
+            c * rh[i+1]
+        )
+
+        return coo_matrix((data, (rows, cols)), shape=(N, N)).tocsr()
 # %%
