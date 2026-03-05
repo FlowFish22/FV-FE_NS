@@ -102,5 +102,7 @@ W2 = d_linsolv_dif(rho_0, lda2) #tilde{w} part of w eqn
 matrix_lhs = np.array(([W1,V1], [V2,W2]))
 vector_lhs = np.array([(sc_pr_grad - rho_init_d * w_0), rho_init_d * v_init])
 
+[tw, v] = np.linalg.solve(matrix_lhs, vector_lhs)
+
 
 #%%
