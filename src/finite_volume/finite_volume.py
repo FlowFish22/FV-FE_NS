@@ -201,5 +201,6 @@ class solver_assembly:
     
     def build_matrix(a, b, c, d):
         """Build matrix from sparse coo blocks"""
-        return bmat([[a, b], [c,d]], format="csc")
+        return bmat([[a, b], 
+                     [c,d]], format="csc")
 # %%

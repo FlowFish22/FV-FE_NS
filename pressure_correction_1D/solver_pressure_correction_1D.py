@@ -106,7 +106,7 @@ M = build_mtx(W1,V1, V2, W2)
 rhs_tw = rho_init_d * w_0 - sc_pr_grad #rhs of the w equation
 rhs_v = rho_init_d * v_init #rhs of the v equation
 rhs_dual = np.concatenate((rhs_tw, rhs_v)) #build the vector on right hand side
-twv = spm.spsolve(M, rhs_dual) #vector (rho * tw, rho * v)
+twv = np.linalg.solve(M, rhs_dual) #vector (tw, v)
 tw, v = twv[:len(twv)//2], twv[len(twv)//2:]
 
 ax.plot(x_dual, tw, label=r"$\rho w$ first update")
