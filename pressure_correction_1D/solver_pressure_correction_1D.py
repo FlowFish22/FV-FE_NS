@@ -5,8 +5,8 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.integrate as spi
-import scipy.sparse as sparse
 import scipy.sparse.linalg as spm
+from scipy.sparse import coo_array, bmat
 
 import finite_volume.finite_volume as fv
 
@@ -92,6 +92,7 @@ c3 = kappa * nu
 d = kappa * nu * nu * (1 - kappa) * lda2
 d_linsolv = fv.solver_assembly.dual_linsolv
 d_linsolv_dif = fv.solver_assembly.dual_linsolv_dif
+build_mtx = fv.solver_assembly.build_matrix
 
 """Matrix blocks corresponding to the linear system for solving tilde{w} and v"""
 W1 = d_linsolv(flx, rho_0, c1, c2) #tilde{w} part of tilde{w} eqn
@@ -99,6 +100,16 @@ V1 = d_linsolv_dif(rho_0, d) #v part of tilde{w} eqn
 V2 = d_linsolv(flx, rho_0, c1, c3) #v part of v eqn
 W2 = d_linsolv_dif(rho_0, lda2) #tilde{w} part of w eqn
 
+M = build_mtx(W1,V1, V2, W2)
 
+"""Compute the intermediate effective velocity and the drift velocity"""
+rhs_tw = rho_init_d * w_0 - sc_pr_grad #rhs of the w equation
+rhs_v = rho_init_d * v_init #rhs of the v equation
+rhs_dual = np.concatenate((rhs_tw, rhs_v)) #build the vector on right hand side
+twv = spm.spsolve(M, rhs_dual) #vector (rho * tw, rho * v)
+tw, v = twv[:len(twv)//2], twv[len(twv)//2:]
+
+ax.plot(x_dual, tw, label=r"$\rho w$ first update")
+ax.legend()
 
 #%%

@@ -3,7 +3,7 @@
 import math
 import numpy as np
 import scipy.integrate as spi
-from scipy.sparse import diags, csr_matrix, coo_matrix
+from scipy.sparse import diags, csr_matrix, coo_matrix, coo_array, bmat
 
 
 class initial_condition:
@@ -151,7 +151,7 @@ class solver_assembly:
 
         #center
         data[1::3] = (
-            1.0 + c1 * (flx[ip] - flx[im]) + c2 * (rh[i] + rh[i+1])
+            0.5 * (rh[i] + rh[i+1]) + c1 * (flx[ip] - flx[im]) + c2 * (rh[i] + rh[i+1])
         )
 
         #right
@@ -198,4 +198,8 @@ class solver_assembly:
         )
 
         return coo_matrix((data, (rows, cols)), shape=(N, N)).tocsr()
+    
+    def build_matrix(a, b, c, d):
+        """Build matrix from sparse coo blocks"""
+        return bmat([[a, b], [c,d]], format="csc")
 # %%
