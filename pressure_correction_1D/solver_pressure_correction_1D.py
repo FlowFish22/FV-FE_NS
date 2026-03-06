@@ -68,8 +68,10 @@ A = p_linsolv(w_0, lda, c, neg, pos)
 #--------------------------------------------------------------------------------------------------------------------
 #------------Solving for rho^0 from the corresponding linear problem--------------------------------------------------
 rho_0 = spm.spsolve(A, rho_init)
+v_0 = np.array([((rho_0[i+1]- rho_0[i])/(cell_size * 0.5 * (rho_0[i+1] + rho_0[i]))) for i in range(0,N-1)])
 ax.plot(x_prim, rho_0, label=r"$\rho^0$")
-#ax.legend()
+ax.plot(x_dual, v_0, label=r"$v^0$")
+ax.legend()
 #------------------------------------------------------------------------------------------------------------------
 #Compute dual average of the discrete mass on the DUAL CELLS
 rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
