@@ -69,7 +69,7 @@ A = p_linsolv(w_0, lda, c, neg, pos)
 #------------Solving for rho^0 from the corresponding linear problem--------------------------------------------------
 rho_0 = spm.spsolve(A, rho_init)
 ax.plot(x_prim, rho_0, label=r"$\rho^0$")
-ax.legend()
+#ax.legend()
 #------------------------------------------------------------------------------------------------------------------
 #Compute dual average of the discrete mass on the DUAL CELLS
 rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
@@ -88,7 +88,7 @@ f_dv = np.array([(rho_0[i+1] - rho_0[i])/cell_size for i in range(0,N-1)])
 flx = np.array([(f_ev[i] - kappa * nu * f_dv[i]) for i in range(0,N-1)])
 c1 = lda * (1.0/4.0)
 c2 = nu * (1.0 - kappa) * lda2
-c3 = kappa * nu
+c3 = kappa * nu * lda2
 d = kappa * nu * nu * (1 - kappa) * lda2
 d_linsolv = fv.solver_assembly.dual_linsolv
 d_linsolv_dif = fv.solver_assembly.dual_linsolv_dif
@@ -106,10 +106,11 @@ M = build_mtx(W1,V1, V2, W2)
 rhs_tw = rho_init_d * w_0 - sc_pr_grad #rhs of the w equation
 rhs_v = rho_init_d * v_init #rhs of the v equation
 rhs_dual = np.concatenate((rhs_tw, rhs_v)) #build the vector on right hand side
-twv = np.linalg.solve(M, rhs_dual) #vector (tw, v)
+twv = spm.spsolve(M, rhs_dual) #vector (tw, v)
 tw, v = twv[:len(twv)//2], twv[len(twv)//2:]
 
-ax.plot(x_dual, tw, label=r"$\rho w$ first update")
+ax.plot(x_dual, tw, label=r"$\tilde{w}$ first update")
+#ax.plot(x_dual, v, label=r"$v$ first update")
 ax.legend()
 
 #%%
