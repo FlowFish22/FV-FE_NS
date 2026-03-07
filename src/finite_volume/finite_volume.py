@@ -13,7 +13,7 @@ class initial_condition:
     def disp_Riemann(x):
         """Dispersive Riemann problem from (Calgaro et al, 2024)"""
         rho0 = 1.5 - 0.5 * np.tanh(x/0.1)
-        u0 = np.zeros_like(x)
+        u0 = 1.5 - 0.5 * np.tanh(x/0.1)
         return (rho0,u0)
 
 

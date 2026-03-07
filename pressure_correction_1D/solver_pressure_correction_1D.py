@@ -7,6 +7,8 @@ import numpy as np
 import scipy.integrate as spi
 import scipy.sparse.linalg as spm
 from scipy.sparse import coo_array, bmat
+from scipy.optimize import root, newton_krylov
+
 
 import finite_volume.finite_volume as fv
 
@@ -29,6 +31,7 @@ case = fv.computational_case(a =-20.0, b = 20.0, Tf = 1.0, N = 50, dt = 0.00001,
 a = case.a
 b = case.b
 N = case.N
+nghost = case.ng
 l = b - a #length of the domain
 cell_size = l/N #uniform cell size
 dt = case.dt
@@ -83,7 +86,8 @@ ax.legend()
 #Prediction step: solve a linear system to get the intermediate effective vel. and the drift vel.
 #------------------------------------------------------------------------------------------------
 #Effective velocity part of the numerical flux on the interfaces excluding external edges
-f_ev = np.array([(fv.convective_flux.flx_upwind(rho_0[i], rho_0[i+1],w_0[i])) for i in range(0,N-1)])
+f_up = fv.convective_flux.flx_upwind
+f_ev = np.array([(f_up(rho_0[i], rho_0[i+1],w_0[i])) for i in range(0,N-1)])
 #Drift velocity part of the numerical flux on the interfaces excluding external edges
 f_dv = np.array([(rho_0[i+1] - rho_0[i])/cell_size for i in range(0,N-1)])
 #Flux = F_ev - kappa * nu * F_dv
@@ -113,6 +117,44 @@ tw, v = twv[:len(twv)//2], twv[len(twv)//2:]
 
 ax.plot(x_dual, tw, label=r"$\tilde{w}$ first update")
 ax.plot(x_dual, v, label=r"$v$ first update")
+ax.legend()
+
+#Correction step: solving implicit non-linear problem for \rho and subsequently correcting w
+#-------------------------------------------------------------------------------------------
+def v_scpr(a, b, c, d): #scaled pressure part of the velocity correction
+    v = (a**gamma - b**gamma)/(cell_size * math.sqrt(0.25 * (a+b) * (c+d)))
+    return v
+
+def v_cor(w, r1,r2, r3, r4, r5, r6): #corrected velocity after eleminating w^{n+1} in the mass-flux
+    p_grad = (r5**gamma - r6**gamma)/(cell_size * 0.5 * (r1 + r2))
+    v = w + v_scpr(r1, r2, r3, r4) - p_grad
+    return v
+
+"""Description of the non-linear problem emerging from eleminating w^{n+1} in the correction steps"""
+def F(r_new):
+    f = np.zeros_like(r_new)
+    N_d = N - 1 #number rof dual cells
+    for i in range(N):
+        ip = (i + 1) % N
+        im = (i - 1) % N
+
+        iR = i % N_d
+        iL = (i - 1) % N_d
+
+        dtlap = (r_new[ip] - 2*r_new[i] + r_new[im]) / lda2
+
+        flx_r = f_up(r_new[ip], r_new[i],
+                      v_cor(tw[iR], rho_0[ip], rho_0[i], rho_init[ip], rho_init[i], r_new[ip], r_new[i]))
+        flx_l = f_up(r_new[im], r_new[i],
+                      v_cor(tw[iL], rho_0[im], rho_0[i], rho_init[im], rho_init[i], r_new[im], r_new[i]))
+        f[i] += r_new[i] + lda * (flx_r - flx_l) - kappa * nu * dtlap - rho_0[i]
+
+    return f
+r0 = np.zeros(N)
+
+sol = root(F, r0, method="hybr", tol=1e-8)
+rho = sol.x
+ax.plot(x_prim, rho, label=r"$\rho^1$: first update")
 ax.legend()
 
 #%%
