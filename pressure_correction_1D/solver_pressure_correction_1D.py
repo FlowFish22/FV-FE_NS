@@ -147,13 +147,26 @@ def F(r_new):
                       v_cor(tw[iR], rho_0[ip], rho_0[i], rho_init[ip], rho_init[i], r_new[ip], r_new[i]))
         flx_l = f_up(r_new[im], r_new[i],
                       v_cor(tw[iL], rho_0[im], rho_0[i], rho_init[im], rho_init[i], r_new[im], r_new[i]))
-        f[i] += r_new[i] + lda * (flx_r - flx_l) - kappa * nu * dtlap - rho_0[i]
+        f[i] += r_new[i] + lda * (flx_r - flx_l) - kappa * nu * dtlap  #- rho_0[i]
 
     return f
-r0 = np.ones(N)
 
-sol = root(F, r0, method="broyden1", tol=1e-8)
-rho = sol.x
+sol = root(F, rho_0, method="broyden1", tol=1e-8)
+rho_1 = sol.x
+
+rho = rho_0.copy()
+
+max_iter = 10
+
+for k in range(max_iter):
+
+    r = F(rho)        # uses implicit flux evaluation
+    rho_new = rho_0 - r
+
+    if np.linalg.norm(rho_new - rho) < 1e-10:
+        break
+
+    rho = rho_new
 ax.plot(x_prim, rho, label=r"$\rho^1$: first update")
 ax.legend()
 
