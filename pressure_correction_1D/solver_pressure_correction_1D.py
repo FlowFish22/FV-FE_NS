@@ -150,12 +150,11 @@ def F(r_new):
         f[i] += r_new[i] + lda * (flx_r - flx_l) - kappa * nu * dtlap - rho_0[i]
 
     return f
-r0 = np.zeros(N)
+r0 = np.ones(N)
 
-sol = root(F, r0, method="hybr", tol=1e-8)
+sol = root(F, r0, method="broyden1", tol=1e-8)
 rho = sol.x
 ax.plot(x_prim, rho, label=r"$\rho^1$: first update")
 ax.legend()
 
-r = newton_krylov(F, r0, verbose=1)
 #%%
