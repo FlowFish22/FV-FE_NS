@@ -157,4 +157,5 @@ rho = sol.x
 ax.plot(x_prim, rho, label=r"$\rho^1$: first update")
 ax.legend()
 
+r = newton_krylov(F, r0, verbose=1)
 #%%
