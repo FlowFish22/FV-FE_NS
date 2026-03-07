@@ -157,7 +157,7 @@ rho_1 = sol.x
 rho = rho_0.copy()
 
 max_iter = 10
-
+#Picard iteration for solving the non-linear problem for \rho^{n+1}
 for k in range(max_iter):
 
     r = F(rho)        # uses implicit flux evaluation
@@ -167,6 +167,7 @@ for k in range(max_iter):
         break
 
     rho = rho_new
+
 ax.plot(x_prim, rho, label=r"$\rho^1$: first update")
 ax.legend()
 
