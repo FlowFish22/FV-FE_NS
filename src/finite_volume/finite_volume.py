@@ -62,8 +62,12 @@ class convective_flux:
     @staticmethod
     def flx_upwind(r1, r2, u):
         """UPWIND flux"""
-        u_pos = 0.5 * (math.fabs(u) + u)
-        u_neg = 0.5 * (math.fabs(u) - u)
+        #overflow safe clipping
+        r1 = np.clip(r1, 1e-12, 1e6) 
+        r2 = np.clip(r2, 1e-12, 1e6)
+        #---------------------------
+        u_pos = 0.5 * (np.fabs(u) + u)
+        u_neg = 0.5 * (np.fabs(u) - u)
         flx = r1 * u_pos - r2 * u_neg
         return flx
 class solver_assembly:

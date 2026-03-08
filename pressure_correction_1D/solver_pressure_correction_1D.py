@@ -20,7 +20,72 @@ import finite_volume.finite_volume as fv
 def pos(a):
     return np.maximum(a,0)
 def neg(a):
-    return np.minimum(a,0)
+    x = - np.minimum(a,0)
+    return x
+
+EPS = 1e-12
+MAX_RHO = 1e6
+
+def safe_pow(x, p):
+    """
+    Safely raise x to the power gamma.
+    Ensures x is at least EPS to avoid NaN/inf from negative or zero guesses.
+    """
+    x = np.clip(x, EPS, MAX_RHO)
+    return np.exp(p * np.log(x))
+
+def v_scpr(a, b, c, d, gamma, cell_size):
+    """
+    Scaled pressure part of the velocity correction (safe version).
+    """
+    # Ensure positive values for sqrt
+    sqrt_arg = 0.25 * (a + b) * (c + d)
+    sqrt_val = np.sqrt(max(sqrt_arg, EPS))
+    
+    # Safe numerator
+    num = safe_pow(a, gamma) - safe_pow(b, gamma)
+    
+    # Safe denominator
+    denom = cell_size * sqrt_val
+    denom = max(denom, EPS)
+    
+    v = num / denom
+    
+    # Final safety check
+    if not math.isfinite(v):
+        v = 0.0  # fallback
+    return v
+
+def v_cor(w, r1, r2, r3, r4, R, L, d):
+    """
+    Corrected velocity after eliminating w^{n+1} safely for nonlinear solvers.
+    """
+    # Compute v_scpr safely
+    v1 = v_scpr(r1, r2, r3, r4, gamma, cell_size)
+    
+    # Safe denominator for the second term
+    denom = cell_size * 0.5 * (r1 + r2)
+    denom = max(denom, EPS)
+    
+    # Safe numerator for the second term
+    term2_num = safe_pow(R, gamma) - safe_pow(L, gamma)
+    
+    # Avoid inf - inf or very small differences
+    if np.abs(term2_num) < EPS:
+        term2_num = 0.0
+    
+    term2 = term2_num / denom
+    
+    # Compute final corrected velocity
+    v = w + d * (v1 - term2)
+    
+    # Final safety check
+    if not np.isfinite(v):
+        v = 0.0  # fallback
+    
+    return v
+
+
 tf = 2.0
 kappa = 0.5
 nu = 0.1
@@ -121,17 +186,11 @@ ax.legend()
 
 #Correction step: solving implicit non-linear problem for \rho and subsequently correcting w
 #-------------------------------------------------------------------------------------------
-def v_scpr(a, b, c, d): #scaled pressure part of the velocity correction
-    v = (a**gamma - b**gamma)/(cell_size * math.sqrt(0.25 * (a+b) * (c+d)))
-    return v
-
-def v_cor(w, r1,r2, r3, r4, R, L): #corrected velocity after eleminating w^{n+1} in the mass-flux
-    v = w + v_scpr(r1, r2, r3, r4) - (R**gamma - L**gamma)/(cell_size * 0.5 * (r1 + r2))
-    return v
-
 """Description of the non-linear problem emerging from eleminating w^{n+1} in the correction steps"""
-def F(r_new):
-    f = np.zeros_like(r_new)
+def F(r):
+    r = np.maximum(r, 1e-12)   # positivity safeguard
+
+    f = r #np.zeros_like(r)
     N_d = N - 1 #number rof dual cells
     for i in range(N):
         ip = (i + 1) % N
@@ -140,13 +199,13 @@ def F(r_new):
         iR = i % N_d
         iL = (i - 1) % N_d
 
-        dtlap = (r_new[ip] - 2*r_new[i] + r_new[im]) / lda2
+        dtlap = (r[ip] - 2.0 * r[i] + r[im]) * lda2
 
-        flx_r = f_up(r_new[ip], r_new[i],
-                      v_cor(tw[iR], rho_0[ip], rho_0[i], rho_init[ip], rho_init[i], r_new[ip], r_new[i]))
-        flx_l = f_up(r_new[im], r_new[i],
-                      v_cor(tw[iL], rho_0[i], rho_0[im], rho_init[i], rho_init[im], r_new[i], r_new[im]))
-        f[i] += r_new[i] + lda * (flx_r - flx_l) - kappa * nu * dtlap  #- rho_0[i]
+        flx_r = f_up(r[ip], r[i],
+                      v_cor(tw[iR], rho_0[ip], rho_0[i], rho_init[ip], rho_init[i], r[ip], r[i], dt))
+        flx_l = f_up(r[im], r[i],
+                      v_cor(tw[iL], rho_0[i], rho_0[im], rho_init[i], rho_init[im], r[i], r[im], dt))
+        f[i] += lda * (flx_r - flx_l) - kappa * nu * dtlap  #- rho_0[i]
 
     return f
 
@@ -167,8 +226,9 @@ for k in range(max_iter):
 ax.plot(x_prim, rho, label=r"$\rho^1$: first update")
 ax.legend()
 
-def ff(a, b):
-    c = b/a
-    return c
+"""w^{n+1} correction"""
+w = np.array([v_cor(tw[i], rho_0[i+1], rho_0[i], rho_init[i+1], rho_init[i], rho[i+1], rho[i], dt) for i in range(0,N-1)])
 
+ax.plot(x_dual, w, label=r"$w^1$: first update")
+ax.legend()
 #%%
