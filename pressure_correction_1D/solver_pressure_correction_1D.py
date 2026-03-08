@@ -24,7 +24,7 @@ def neg(a):
 tf = 2.0
 kappa = 0.5
 nu = 0.1
-gamma = 1.4
+gamma = 2.0
 initial_condition = fv.initial_condition.disp_Riemann
 case = fv.computational_case(a =-20.0, b = 20.0, Tf = 1.0, N = 50, dt = 0.00001, ng = 1)
 "-------initialization of the scheme--------------"
@@ -149,9 +149,6 @@ def F(r_new):
         f[i] += r_new[i] + lda * (flx_r - flx_l) - kappa * nu * dtlap  #- rho_0[i]
 
     return f
-
-sol = root(F, rho_0, method="broyden1", tol=1e-8)
-rho_1 = sol.x
 
 rho = rho_0.copy()
 
