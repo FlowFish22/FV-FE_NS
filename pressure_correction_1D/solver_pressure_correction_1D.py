@@ -191,7 +191,7 @@ def F(r):
     r = np.maximum(r, 1e-12)   # positivity safeguard
 
     f = r #np.zeros_like(r)
-    N_d = N - 1 #number rof dual cells
+    N_d = N - 1 #number rof dual cells/ cell interfaces
     for i in range(N):
         ip = (i + 1) % N
         im = (i - 1) % N
