@@ -125,9 +125,8 @@ def v_scpr(a, b, c, d): #scaled pressure part of the velocity correction
     v = (a**gamma - b**gamma)/(cell_size * math.sqrt(0.25 * (a+b) * (c+d)))
     return v
 
-def v_cor(w, r1,r2, r3, r4, r5, r6): #corrected velocity after eleminating w^{n+1} in the mass-flux
-    p_grad = (r5**gamma - r6**gamma)/(cell_size * 0.5 * (r1 + r2))
-    v = w + v_scpr(r1, r2, r3, r4) - p_grad
+def v_cor(w, r1,r2, r3, r4, R, L): #corrected velocity after eleminating w^{n+1} in the mass-flux
+    v = w + v_scpr(r1, r2, r3, r4) - (R**gamma - L**gamma)/(cell_size * 0.5 * (r1 + r2))
     return v
 
 """Description of the non-linear problem emerging from eleminating w^{n+1} in the correction steps"""
@@ -146,7 +145,7 @@ def F(r_new):
         flx_r = f_up(r_new[ip], r_new[i],
                       v_cor(tw[iR], rho_0[ip], rho_0[i], rho_init[ip], rho_init[i], r_new[ip], r_new[i]))
         flx_l = f_up(r_new[im], r_new[i],
-                      v_cor(tw[iL], rho_0[im], rho_0[i], rho_init[im], rho_init[i], r_new[im], r_new[i]))
+                      v_cor(tw[iL], rho_0[i], rho_0[im], rho_init[i], rho_init[im], r_new[i], r_new[im]))
         f[i] += r_new[i] + lda * (flx_r - flx_l) - kappa * nu * dtlap  #- rho_0[i]
 
     return f
@@ -170,5 +169,9 @@ for k in range(max_iter):
 
 ax.plot(x_prim, rho, label=r"$\rho^1$: first update")
 ax.legend()
+
+def ff(a, b):
+    c = b/a
+    return c
 
 #%%
