@@ -90,9 +90,9 @@ tf = 2.0
 kappa = 0.5
 nu = 0.1
 gamma = 2.0
-rho_initial_condition = fv.initial_condition.sine_wave_rho
-u_initial_condition = fv.initial_condition.sine_wave_u
-case = fv.computational_case(a =-20.0, b = 20.0, Tf = 0.002, N = 50, dt = 0.0001, ng = 1)
+rho_initial_condition = fv.initial_condition.disp_Riemann_rho
+u_initial_condition = fv.initial_condition.disp_Riemann_u
+case = fv.computational_case(a =-20.0, b = 20.0, Tf = 0.02, N = 50, dt = 0.001, ng = 1)
 "-------initialization of the scheme--------------"
 a = case.a
 b = case.b
@@ -116,12 +116,12 @@ d = kappa * (nu ** 2) * (1 - kappa) * lda2
 #Discretize the initial density by taking cell averages on PRIMAL CELLS
 prim_edge = np.array([(a + i * cell_size) for i in range(0, N+1)])#edges of N uniform subintervals of (a,b)/edges of the primal cells including bdary a,b
 x_prim = np.array([(prim_edge[i] + 0.5 * cell_size) for i in range(0, N)])#primal cell centres
-#rho_init = np.array([spi.quad(lambda x: (1.0/cell_size) * rho_initial_condition(x), prim_edge[i], prim_edge[i+1])[0] for i in range(0,N)])
-rho_init = np.array([rho_initial_condition(x_prim[i]) for i in range(0,N)]) #midpoint rule
+rho_init = np.array([spi.quad(lambda x: (1.0/cell_size) * rho_initial_condition(x), prim_edge[i], prim_edge[i+1])[0] for i in range(0,N)])
+#rho_init = np.array([rho_initial_condition(x_prim[i]) for i in range(0,N)]) #midpoint rule
 #Discretize the initial velocity by taking cell averages on DUAL CELLS
 x_dual = np.array([(prim_edge[i+1]) for i in range(0, N-1)]) #dual cell centres/internal edges/primal cell edges lying inside (a,b) hence excluding a,b
-#u_0 = np.array([spi.quad(lambda x: (1.0/cell_size) * u_initial_condition(x), x_prim[i], x_prim[i+1])[0] for i in range(0,N-1)])
-u_0 =  np.array([u_initial_condition(x_dual[i]) for i in range(0,N-1)]) #midpoint rule
+u_0 = np.array([spi.quad(lambda x: (1.0/cell_size) * u_initial_condition(x), x_prim[i], x_prim[i+1])[0] for i in range(0,N-1)])
+#u_0 =  np.array([u_initial_condition(x_dual[i]) for i in range(0,N-1)]) #midpoint rule
 #Compute the initial DRIFT VELOCITY) on DUAL CELLS
 v_init = np.array([((rho_init[i+1]- rho_init[i])/(cell_size * 0.5 * (rho_init[i+1] + rho_init[i]))) for i in range(0,N-1)])
 #Compute the discrete EFFECTIVE VELOCITY on DUAL CELLS
@@ -130,7 +130,7 @@ w_0 = np.array([u_0[i] - kappa * nu * v_init[i] for i in range(0,N-1)])
 #x = np.linspace(0, 1, num=int(1e2))
 #rho0 = initial_condition(x)[1]
 f, ax = plt.subplots(layout="constrained")
-ax.plot(x_prim, rho_init, label=r"$\rho$")
+ax.plot(x_prim, rho_init, label=r"$\rho^-1$")
 ax.plot(x_dual, u_0, label=r"$u_0$")
 ax.plot(x_dual, v_init, label=r"$\partial_x \ln(\rho)$")
 ax.plot(x_dual, w_0, label=r"$w_0$")
@@ -160,7 +160,7 @@ build_mtx = fv.solver_assembly.build_matrix
 #------------------------
 """Time-looping begins"""
 #------------------------
-for n in range(1):
+for n in range(10):
     #Compute dual average of the discrete mass on the DUAL CELLS
     rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
     rho_0_d = np.array([(0.5 * (rho_0[i+1]+rho_0[i])) for i in range(0,N-1)])
@@ -221,7 +221,7 @@ for n in range(1):
 
     rho_init = rho_0.copy()
     rho = rho_0.copy()
-    max_iter = 5
+    max_iter = 10
     #Picard iteration for solving the non-linear problem for \rho^{n+1}
     for k in range(max_iter):
 

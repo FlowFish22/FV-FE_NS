@@ -10,11 +10,13 @@ class initial_condition:
     """Library of initial conditions."""
 
     @staticmethod
-    def disp_Riemann(x):
-        """Dispersive Riemann problem from (Calgaro et al, 2024)"""
+    def disp_Riemann_rho(x):
         rho0 = 1.5 - 0.5 * np.tanh(x/0.1)
-        u0 = 1.5 - 0.5 * np.tanh(x/0.1) #np.zeros_like(x)
-        return (rho0, u0)
+        #u0 = 1.5 - 0.5 * np.tanh(x/0.1) #np.zeros_like(x)
+        return (rho0)
+    def disp_Riemann_u(x):
+        u0 = np.zeros_like(x)
+        return u0
     """smooth test case"""
     def sine_wave_rho(x):
         rho0 = 2.0 + np.sin(x)
