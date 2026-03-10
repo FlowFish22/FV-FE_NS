@@ -34,7 +34,7 @@ def safe_pow(x, p):
     x = np.clip(x, EPS, MAX_RHO)
     return np.exp(p * np.log(x))
 
-def v_scpr(a, b, c, d, gamma, cell_size):
+def v_scpr(a, b, c, d, gm, dx):
     """
     Scaled pressure part of the velocity correction (safe version).
     """
@@ -43,10 +43,10 @@ def v_scpr(a, b, c, d, gamma, cell_size):
     sqrt_val = np.sqrt(max(sqrt_arg, EPS))
     
     # Safe numerator
-    num = safe_pow(a, gamma) - safe_pow(b, gamma)
+    num = safe_pow(a, gm) - safe_pow(b, gm)
     
     # Safe denominator
-    denom = cell_size * sqrt_val
+    denom = dx * sqrt_val
     denom = max(denom, EPS)
     
     v = num / denom
@@ -56,19 +56,19 @@ def v_scpr(a, b, c, d, gamma, cell_size):
         v = 0.0  # fallback
     return v
 
-def v_cor(w, r1, r2, r3, r4, R, L, d):
+def v_cor(w, r1, r2, r3, r4, R, L, d, gm, dx):
     """
     Corrected velocity after eliminating w^{n+1} safely for nonlinear solvers.
     """
     # Compute v_scpr safely
-    v1 = v_scpr(r1, r2, r3, r4, gamma, cell_size)
+    v1 = v_scpr(r1, r2, r3, r4, gm, dx)
     
     # Safe denominator for the second term
     denom = cell_size * 0.5 * (r1 + r2)
     denom = max(denom, EPS)
     
     # Safe numerator for the second term
-    term2_num = safe_pow(R, gamma) - safe_pow(L, gamma)
+    term2_num = safe_pow(R, gm) - safe_pow(L, gm)
     
     # Avoid inf - inf or very small differences
     if np.abs(term2_num) < EPS:
@@ -90,9 +90,9 @@ tf = 2.0
 kappa = 0.5
 nu = 0.1
 gamma = 2.0
-rho_initial_condition = fv.initial_condition.disp_Riemann_rho
-u_initial_condition = fv.initial_condition.disp_Riemann_u
-case = fv.computational_case(a =-20.0, b = 20.0, Tf = 0.02, N = 50, dt = 0.001, ng = 1)
+rho_initial_condition = fv.initial_condition.sine_wave_rho
+u_initial_condition = fv.initial_condition.sine_wave_u
+case = fv.computational_case(a =-20.0, b = 20.0, Tf = 0.2, N = 50, dt = 0.01, ng = 1)
 "-------initialization of the scheme--------------"
 a = case.a
 b = case.b
@@ -160,7 +160,7 @@ build_mtx = fv.solver_assembly.build_matrix
 #------------------------
 """Time-looping begins"""
 #------------------------
-for n in range(5):
+for n in range(2):
     #Compute dual average of the discrete mass on the DUAL CELLS
     rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
     rho_0_d = np.array([(0.5 * (rho_0[i+1]+rho_0[i])) for i in range(0,N-1)])
@@ -209,24 +209,24 @@ for n in range(5):
             iR = i % N_d
             iL = (i - 1) % N_d
 
-            dtlap = (r[ip] - 2.0 * r[i] + r[im]) * lda2
+            dtlap = (r[ip] - 2.0 * r[i] + r[im]) * (1.0/(cell_size**2))
 
             flx_r = f_up(r[ip], r[i],
-                      v_cor(tw[iR], rho_0[ip], rho_0[i], rho_init[ip], rho_init[i], r[ip], r[i], dt))
+                      v_cor(tw[iR], rho_0[ip], rho_0[i], rho_init[ip], rho_init[i], r[ip], r[i], dt, gamma, cell_size))
             flx_l = f_up(r[im], r[i],
-                      v_cor(tw[iL], rho_0[i], rho_0[im], rho_init[i], rho_init[im], r[i], r[im], dt))
-            f[i] += lda * (flx_r - flx_l) - kappa * nu * dtlap  #- rho_0[i]
+                      v_cor(tw[iL], rho_0[i], rho_0[im], rho_init[i], rho_init[im], r[i], r[im], dt, gamma, cell_size))
+            f[i] += (1.0/cell_size) * (flx_r - flx_l) - kappa * nu * dtlap  #- rho_0[i]
 
         return f
 
     rho_init = rho_0.copy()
     rho = rho_0.copy()
-    max_iter = 10
+    max_iter = 50
     #Picard iteration for solving the non-linear problem for \rho^{n+1}
     for k in range(max_iter):
 
         r = F(rho)        # uses implicit flux evaluation
-        rho_new = rho_0 - r
+        rho_new = rho_0 - dt * r
 
         if np.linalg.norm(rho_new - rho) < 1e-10:
             break
