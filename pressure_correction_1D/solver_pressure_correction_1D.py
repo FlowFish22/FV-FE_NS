@@ -160,7 +160,7 @@ build_mtx = fv.solver_assembly.build_matrix
 #------------------------
 """Time-looping begins"""
 #------------------------
-for n in range(10):
+for n in range(5):
     #Compute dual average of the discrete mass on the DUAL CELLS
     rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
     rho_0_d = np.array([(0.5 * (rho_0[i+1]+rho_0[i])) for i in range(0,N-1)])
