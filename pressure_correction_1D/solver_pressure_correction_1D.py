@@ -116,10 +116,10 @@ d = kappa * (nu ** 2) * (1 - kappa) * lda2
 #Discretize the initial density by taking cell averages on PRIMAL CELLS
 prim_edge = np.array([(a + i * cell_size) for i in range(0, N+1)])#edges of N uniform subintervals of (a,b)/edges of the primal cells including bdary a,b
 x_prim = np.array([(prim_edge[i] + 0.5 * cell_size) for i in range(0, N)])#primal cell centres
-rho_init = np.array([spi.quad(lambda x: (1.0/cell_size) * rho_initial_condition(x), prim_edge[i], prim_edge[i+1])[0] for i in range(0,N)])
+rho_init = np.array([spi.quad(lambda x: (1.0/cell_size) * rho_initial_condition(x), prim_edge[i], prim_edge[i+1]) for i in range(0,N)])
 #Discretize the initial velocity by taking cell averages on DUAL CELLS
 x_dual = np.array([(prim_edge[i+1]) for i in range(0, N-1)]) #dual cell centres/internal edges/primal cell edges lying inside (a,b) hence excluding a,b
-u_0 = np.array([spi.quad(lambda x: (1.0/cell_size) * u_initial_condition(x), x_prim[i], x_prim[i+1])[1] for i in range(0,N-1)])
+u_0 = np.array([spi.quad(lambda x: (1.0/cell_size) * u_initial_condition(x), x_prim[i], x_prim[i+1]) for i in range(0,N-1)])
 #Compute the initial DRIFT VELOCITY) on DUAL CELLS
 v_init = np.array([((rho_init[i+1]- rho_init[i])/(cell_size * 0.5 * (rho_init[i+1] + rho_init[i]))) for i in range(0,N-1)])
 #Compute the discrete EFFECTIVE VELOCITY on DUAL CELLS
