@@ -92,7 +92,7 @@ nu = 0.1
 gamma = 2.0
 rho_initial_condition = fv.initial_condition.sine_wave_rho
 u_initial_condition = fv.initial_condition.sine_wave_u
-case = fv.computational_case(a =-20.0, b = 20.0, Tf = 0.02, N = 50, dt = 0.001, ng = 1)
+case = fv.computational_case(a =-20.0, b = 20.0, Tf = 0.002, N = 50, dt = 0.0001, ng = 1)
 "-------initialization of the scheme--------------"
 a = case.a
 b = case.b
@@ -160,7 +160,7 @@ build_mtx = fv.solver_assembly.build_matrix
 #------------------------
 """Time-looping begins"""
 #------------------------
-for n in range(N_tstep):
+for n in range(1):
     #Compute dual average of the discrete mass on the DUAL CELLS
     rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
     rho_0_d = np.array([(0.5 * (rho_0[i+1]+rho_0[i])) for i in range(0,N-1)])
@@ -240,7 +240,7 @@ for n in range(N_tstep):
     v_init = v.copy()
     print("step:", n)
 
-ax.plot(x_prim, rho_0, label=r"$\rho$, T=0.05")
+ax.plot(x_prim, rho_0, label=r"$\rho$, T_final")
 ax.legend()
 
 #%%
