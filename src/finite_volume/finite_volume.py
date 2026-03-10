@@ -15,11 +15,14 @@ class initial_condition:
         rho0 = 1.5 - 0.5 * np.tanh(x/0.1)
         u0 = 1.5 - 0.5 * np.tanh(x/0.1) #np.zeros_like(x)
         return (rho0, u0)
-    def sine_wave(x):
-        """Dispersive Riemann problem from (Calgaro et al, 2024)"""
+    """smooth test case"""
+    def sine_wave_rho(x):
         rho0 = 1.0 + np.sin(x)
-        u0 = 1.0 + np.cos(x) #np.zeros_like(x)
-        return (rho0, u0)
+        #u0 = 1.0 + np.cos(x) #np.zeros_like(x)
+        return (rho0)
+    def sine_wave_u(x):
+        u0 = 1.0 #+ np.cos(x) #np.zeros_like(x)
+        return (u0)
 
 
 class computational_case:
