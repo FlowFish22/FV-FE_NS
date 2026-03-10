@@ -211,9 +211,9 @@ for n in range(N_tstep):
 
             dtlap = (r[ip] - 2.0 * r[i] + r[im]) * lda2
 
-            flx_r = f_up(r[ip], r[i],
+            flx_r = f_up(r[i], r[ip],
                       v_cor(tw[iR], rho_0[ip], rho_0[i], rho_init[ip], rho_init[i], r[ip], r[i], dt, gamma, cell_size))
-            flx_l = f_up(r[i], r[im],
+            flx_l = f_up(r[im], r[i],
                       v_cor(tw[iL], rho_0[i], rho_0[im], rho_init[i], rho_init[im], r[i], r[im], dt, gamma, cell_size))
             f[i] = r[i] + lda * (flx_r - flx_l) - kappa * nu * dtlap  #- rho_0[i]
 
@@ -236,7 +236,7 @@ for n in range(N_tstep):
         return r - rho_0 + dt * F(r)
     
     rho = anderson(G, rho, 2, 0.9, maxiter=50, f_tol=1e-12)
-    rho -= np.mean(rho) - np.mean(rho_0)
+    #rho -= np.mean(rho) - np.mean(rho_0)
     rho_0 = rho.copy()
     """w^{n+1} correction"""
     w = np.array([v_cor(tw[i], rho_0[i+1], rho_0[i], rho_init[i+1], rho_init[i], rho_0[i+1], rho_0[i], dt, gamma, cell_size) for i in range(0,N-1)])
