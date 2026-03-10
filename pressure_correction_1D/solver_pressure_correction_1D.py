@@ -7,7 +7,7 @@ import numpy as np
 import scipy.integrate as spi
 import scipy.sparse.linalg as spm
 from scipy.sparse import coo_array, bmat
-from scipy.optimize import root, newton_krylov
+from scipy.optimize import root, newton_krylov, anderson
 
 
 import finite_volume.finite_volume as fv
@@ -90,9 +90,9 @@ tf = 2.0
 kappa = 0.5
 nu = 0.1
 gamma = 2.0
-rho_initial_condition = fv.initial_condition.sine_wave_rho
-u_initial_condition = fv.initial_condition.sine_wave_u
-case = fv.computational_case(a =-20.0, b = 20.0, Tf = 0.2, N = 50, dt = 0.01, ng = 1)
+rho_initial_condition = fv.initial_condition.disp_Riemann_rho
+u_initial_condition = fv.initial_condition.disp_Riemann_u
+case = fv.computational_case(a =-20.0, b = 20.0, Tf = 0.2, N = 50, dt = 0.001, ng = 1)
 "-------initialization of the scheme--------------"
 a = case.a
 b = case.b
@@ -160,7 +160,7 @@ build_mtx = fv.solver_assembly.build_matrix
 #------------------------
 """Time-looping begins"""
 #------------------------
-for n in range(2):
+for n in range(N_tstep):
     #Compute dual average of the discrete mass on the DUAL CELLS
     rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
     rho_0_d = np.array([(0.5 * (rho_0[i+1]+rho_0[i])) for i in range(0,N-1)])
@@ -200,7 +200,7 @@ for n in range(2):
     def F(r):
         r = np.maximum(r, 1e-12)   # positivity safeguard
 
-        f = r #np.zeros_like(r)
+        f = np.zeros_like(r)
         N_d = N - 1 #number rof dual cells/ cell interfaces
         for i in range(N):
             ip = (i + 1) % N
@@ -209,33 +209,37 @@ for n in range(2):
             iR = i % N_d
             iL = (i - 1) % N_d
 
-            dtlap = (r[ip] - 2.0 * r[i] + r[im]) * (1.0/(cell_size**2))
+            dtlap = (r[ip] - 2.0 * r[i] + r[im]) * lda2
 
             flx_r = f_up(r[ip], r[i],
                       v_cor(tw[iR], rho_0[ip], rho_0[i], rho_init[ip], rho_init[i], r[ip], r[i], dt, gamma, cell_size))
-            flx_l = f_up(r[im], r[i],
+            flx_l = f_up(r[i], r[im],
                       v_cor(tw[iL], rho_0[i], rho_0[im], rho_init[i], rho_init[im], r[i], r[im], dt, gamma, cell_size))
-            f[i] += (1.0/cell_size) * (flx_r - flx_l) - kappa * nu * dtlap  #- rho_0[i]
+            f[i] = r[i] + lda * (flx_r - flx_l) - kappa * nu * dtlap  #- rho_0[i]
 
         return f
 
     rho_init = rho_0.copy()
     rho = rho_0.copy()
-    max_iter = 50
-    #Picard iteration for solving the non-linear problem for \rho^{n+1}
-    for k in range(max_iter):
+    max_iter = 100
+    # #Picard iteration for solving the non-linear problem for \rho^{n+1}
+    # for k in range(max_iter):
 
-        r = F(rho)        # uses implicit flux evaluation
-        rho_new = rho_0 - dt * r
+    #     r = F(rho)        # uses implicit flux evaluation
+    #     rho_new = rho_0 - r
+    #     r1 = (1.0 - 0.3) * rho + 0.3 * rho_new
+    #     if np.linalg.norm(rho_new - r1) < 1e-10:
+    #         break
 
-        if np.linalg.norm(rho_new - rho) < 1e-10:
-            break
-
-        rho = rho_new
-
+    #     rho = rho_new
+    def G(r):
+        return r - rho_0 + dt * F(r)
+    
+    rho = anderson(G, rho, 2, 0.9, maxiter=50, f_tol=1e-12)
+    rho -= np.mean(rho) - np.mean(rho_0)
     rho_0 = rho.copy()
     """w^{n+1} correction"""
-    w = np.array([v_cor(tw[i], rho_0[i+1], rho_0[i], rho_init[i+1], rho_init[i], rho_0[i+1], rho_0[i], dt) for i in range(0,N-1)])
+    w = np.array([v_cor(tw[i], rho_0[i+1], rho_0[i], rho_init[i+1], rho_init[i], rho_0[i+1], rho_0[i], dt, gamma, cell_size) for i in range(0,N-1)])
     w_0 = w.copy()
     v_init = v.copy()
     print("step:", n)
