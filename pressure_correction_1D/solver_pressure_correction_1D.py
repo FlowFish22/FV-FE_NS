@@ -92,7 +92,7 @@ nu = 0.1
 gamma = 2.0
 rho_initial_condition = fv.initial_condition.sine_wave_rho
 u_initial_condition = fv.initial_condition.sine_wave_u
-case = fv.computational_case(a =-20.0, b = 20.0, Tf = 0.01, N = 100, dt = 0.001, ng = 1)
+case = fv.computational_case(a =-20.0, b = 20.0, Tf = 0.02, N = 50, dt = 0.001, ng = 1)
 "-------initialization of the scheme--------------"
 a = case.a
 b = case.b
@@ -221,7 +221,7 @@ for n in range(N_tstep):
 
     rho_init = rho_0.copy()
     rho = rho_0.copy()
-    max_iter = 10
+    max_iter = 5
     #Picard iteration for solving the non-linear problem for \rho^{n+1}
     for k in range(max_iter):
 
