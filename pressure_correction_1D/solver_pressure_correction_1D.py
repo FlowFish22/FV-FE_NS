@@ -161,7 +161,7 @@ print(L1_tot)
 #------------------------
 """Time-looping begins"""
 #------------------------
-for n in range(3):
+for n in range(1):
     #Compute dual average of the discrete mass on the DUAL CELLS
     rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
     rho_0_d = np.array([(0.5 * (rho_0[i+1]+rho_0[i])) for i in range(0,N-1)])
@@ -248,6 +248,7 @@ for n in range(3):
 u_final = w_0 + v_init
 ax.plot(x_prim, rho_0, label=r"$\rho$, T_final")
 ax.plot(x_dual, w, label=r"$w$, T_final")
+ax.plot(x_dual, v, label=r"$v$, T_final")
 ax.legend()
 L1_tot_final = np.sum(rho_0)
 error_tot = L1_tot - L1_tot_final
