@@ -194,7 +194,7 @@ for n in range(3):
     rhs_tw = rho_init_d * w_0 - sc_pr_grad #rhs of the w equation
     rhs_v = rho_init_d * v_init #rhs of the v equation
     rhs_dual = np.concatenate((rhs_tw, rhs_v)) #build the vector on right hand side
-    twv = spsolve(M, rhs_dual) #vector (tw, v)
+    twv = spsolve(M.T, rhs_dual) #vector (tw, v)
     tw, v = twv[:len(twv)//2], twv[len(twv)//2:]
     # ax.plot(x_dual, tw, label=r"$\tilde{w}$, T_final")
     # ax.plot(x_dual, v, label=r"$v$, T_final")   
