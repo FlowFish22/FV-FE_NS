@@ -188,15 +188,18 @@ class solver_assembly:
         N_c = N - 1 
         
         i = np.arange(N)
+        ip = (i + 1) % N
+        im = (i - 1) % N
+
         iR = i + 1
         iL = i 
 
         rows = np.repeat(i, 3)
 
         cols = np.empty(3*N, dtype=int)
-        cols[0::3] = iL
+        cols[0::3] = ip
         cols[1::3] = i
-        cols[2::3] = iR
+        cols[2::3] = im
 
         data = np.empty(3*N)
 
