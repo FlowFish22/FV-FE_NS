@@ -164,7 +164,7 @@ class solver_assembly:
 
         #left
         data[0::3] = (
-            - c1 * (flx[i] + flx[im]) - c2 * rh[iL]
+            - c1 * (flx[im+1] + flx[im]) - c2 * rh[iL]
         )
 
         #center
@@ -174,7 +174,7 @@ class solver_assembly:
 
         #right
         data[2::3] = (
-            c1 * (flx[ip] + flx[i]) - c2 * rh[iR]
+            c1 * (flx[ip] + flx[ip-1]) - c2 * rh[iR]
         )
 
         return coo_matrix((data, (rows, cols)), shape=(N, N)).tocsr()
