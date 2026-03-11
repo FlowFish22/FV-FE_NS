@@ -64,7 +64,7 @@ def v_cor(w, r1, r2, r3, r4, R, L, d, gm, dx):
     v1 = v_scpr(r1, r2, r3, r4, gm, dx)
     
     # Safe denominator for the second term
-    denom = cell_size * 0.5 * (r1 + r2)
+    denom = dx * 0.5 * (r1 + r2)
     denom = max(denom, EPS)
     
     # Safe numerator for the second term
@@ -92,7 +92,7 @@ nu = 0.1
 gamma = 2.0
 rho_initial_condition = fv.initial_condition.sine_wave_rho
 u_initial_condition = fv.initial_condition.sine_wave_u
-case = fv.computational_case(a =-20.0, b = 20.0, Tf = 0.5, N = 50, dt = 0.001, ng = 1)
+case = fv.computational_case(a =-20.0, b = 20.0, Tf = 0.5, N = 400, dt = 0.01, ng = 1)
 "-------initialization of the scheme--------------"
 a = case.a
 b = case.b
@@ -161,7 +161,7 @@ print(L1_tot)
 #------------------------
 """Time-looping begins"""
 #------------------------
-for n in range(10):
+for n in range(3):
     #Compute dual average of the discrete mass on the DUAL CELLS
     rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
     rho_0_d = np.array([(0.5 * (rho_0[i+1]+rho_0[i])) for i in range(0,N-1)])
@@ -247,7 +247,7 @@ for n in range(10):
 
 u_final = w_0 + v_init
 ax.plot(x_prim, rho_0, label=r"$\rho$, T_final")
-ax.plot(x_dual, v_init, label=r"$v$, T_final")
+ax.plot(x_dual, w, label=r"$w$, T_final")
 ax.legend()
 L1_tot_final = np.sum(rho_0)
 error_tot = L1_tot - L1_tot_final
