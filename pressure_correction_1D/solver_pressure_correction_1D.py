@@ -92,7 +92,7 @@ nu = 0.1
 gamma = 2.0
 rho_initial_condition = fv.initial_condition.disp_Riemann_rho
 u_initial_condition = fv.initial_condition.disp_Riemann_u
-case = fv.computational_case(a =-20.0, b = 20.0, Tf = 0.2, N = 50, dt = 0.001, ng = 1)
+case = fv.computational_case(a =-20.0, b = 20.0, Tf = 0.5, N = 50, dt = 0.001, ng = 1)
 "-------initialization of the scheme--------------"
 a = case.a
 b = case.b
@@ -156,7 +156,8 @@ d_linsolv = fv.solver_assembly.dual_linsolv
 d_linsolv_dif = fv.solver_assembly.dual_linsolv_dif
 build_mtx = fv.solver_assembly.build_matrix
 #------------------------------------------------------------------------------------------------------------------
-
+L1_tot = np.sum(rho_0)
+print(L1_tot)
 #------------------------
 """Time-looping begins"""
 #------------------------
@@ -215,28 +216,28 @@ for n in range(N_tstep):
                       v_cor(tw[iR], rho_0[ip], rho_0[i], rho_init[ip], rho_init[i], r[ip], r[i], dt, gamma, cell_size))
             flx_l = f_up(r[im], r[i],
                       v_cor(tw[iL], rho_0[i], rho_0[im], rho_init[i], rho_init[im], r[i], r[im], dt, gamma, cell_size))
-            f[i] = r[i] + lda * (flx_r - flx_l) - kappa * nu * dtlap  #- rho_0[i]
+            f[i] = lda * (flx_r - flx_l) - kappa * nu * dtlap  #- rho_0[i]
 
         return f
 
     rho_init = rho_0.copy()
     rho = rho_0.copy()
     max_iter = 100
-    # #Picard iteration for solving the non-linear problem for \rho^{n+1}
-    # for k in range(max_iter):
+    #Picard iteration for solving the non-linear problem for \rho^{n+1}
+    for k in range(max_iter):
 
-    #     r = F(rho)        # uses implicit flux evaluation
-    #     rho_new = rho_0 - r
-    #     r1 = (1.0 - 0.3) * rho + 0.3 * rho_new
-    #     if np.linalg.norm(rho_new - r1) < 1e-10:
-    #         break
+        r = F(rho)        # uses implicit flux evaluation
+        rho_new = rho_0 - r
+        r1 = (1.0 - 0.3) * rho + 0.3 * rho_new
+        if np.linalg.norm(rho_new - r1) < 1e-10:
+            break
 
-    #     rho = rho_new
+        rho = rho_new
     def G(r):
-        return r - rho_0 + dt * F(r)
+        return r - rho_0 + safe_pow(dt, 2.0) * F(r)
     
     rho = anderson(G, rho, 2, 0.9, maxiter=50, f_tol=1e-12)
-    #rho -= np.mean(rho) - np.mean(rho_0)
+    rho -= np.mean(rho) - np.mean(rho_0)
     rho_0 = rho.copy()
     """w^{n+1} correction"""
     w = np.array([v_cor(tw[i], rho_0[i+1], rho_0[i], rho_init[i+1], rho_init[i], rho_0[i+1], rho_0[i], dt, gamma, cell_size) for i in range(0,N-1)])
@@ -245,6 +246,11 @@ for n in range(N_tstep):
     print("step:", n)
 
 ax.plot(x_prim, rho_0, label=r"$\rho$, T_final")
+#ax.plot(x_dual, w_0, label=r"$w$, T_final")
 ax.legend()
+L1_tot_final = np.sum(rho_0)
+error_tot = L1_tot - L1_tot_final
+print(np.abs(error_tot)) 
+print(L1_tot_final)
 
 #%%
