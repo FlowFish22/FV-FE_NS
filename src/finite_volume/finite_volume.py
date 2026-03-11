@@ -186,33 +186,34 @@ class solver_assembly:
     
         """
         N = len(rh) - 1 #len(rh) = N+1
-
+        N_c = N - 1 
+        
         i = np.arange(N)
-        ip = (i + 1) % N
-        im = (i - 1) % N
+        iR = (i + 1) % N_c
+        iL = i % N_c
 
         rows = np.repeat(i, 3)
 
         cols = np.empty(3*N, dtype=int)
-        cols[0::3] = im
+        cols[0::3] = iL
         cols[1::3] = i
-        cols[2::3] = ip
+        cols[2::3] = iR
 
         data = np.empty(3*N)
 
         #left
         data[0::3] = (
-             c * rh[i]
+             c * rh[iL]
         )
 
         #center
         data[1::3] = (
-           - c * (rh[i] + rh[i+1])
+           - c * (rh[iL] + rh[iR])
         )
 
         #right
         data[2::3] = (
-            c * rh[i+1]
+            c * rh[iR]
         )
 
         return coo_matrix((data, (rows, cols)), shape=(N, N)).tocsr()
