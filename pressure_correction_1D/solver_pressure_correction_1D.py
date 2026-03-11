@@ -190,7 +190,7 @@ for n in range(2):
 
     M = build_mtx(W1,V1, W2, V2)
     M = M.tocsc()
-
+    print("Residual:", np.linalg.norm(M @ x - b))
     """Compute the intermediate effective velocity and the drift velocity"""
     rhs_tw = rho_init_d * w_0 - sc_pr_grad #rhs of the w equation
     rhs_v = rho_init_d * v_init #rhs of the v equation
