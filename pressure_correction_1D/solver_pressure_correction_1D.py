@@ -4,11 +4,13 @@
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy as sp
 import scipy.integrate as spi
 import scipy.sparse.linalg as spm
+import numpy.linalg as numlin
 from scipy.sparse import coo_array, bmat
 from scipy.optimize import root, anderson
-
+from scipy.sparse.linalg import spsolve
 
 import finite_volume.finite_volume as fv
 
@@ -110,7 +112,7 @@ N_tstep = math.floor(tstep)
 c1 = lda * (1.0/4.0)
 c2 = nu * (1.0 - kappa) * lda2
 c3 = kappa * nu * lda2
-d = kappa * (nu ** 2) * (1 - kappa) * lda2
+d = kappa * (nu ** 2) * (1.0 - kappa) * lda2
 
 
 #Discretize the initial density by taking cell averages on PRIMAL CELLS
@@ -161,7 +163,7 @@ print(L1_tot)
 #------------------------
 """Time-looping begins"""
 #------------------------
-for n in range(30):
+for n in range(3):
     #Compute dual average of the discrete mass on the DUAL CELLS
     rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
     rho_0_d = np.array([(0.5 * (rho_0[i+1]+rho_0[i])) for i in range(0,N-1)])
@@ -182,9 +184,9 @@ for n in range(30):
 
     """Matrix blocks corresponding to the linear system for solving tilde{w} and v"""
     W1 = d_linsolv(flx, rho_0, c1, c2) #tilde{w} part of tilde{w} eqn
-    V1 = d_linsolv_dif(rho_0, d) #v part of tilde{w} eqn
+    V1 = d_linsolv(flx, rho_0, 0.0, d) #v part of tilde{w} eqn
     V2 = d_linsolv(flx, rho_0, c1, c3) #v part of v eqn
-    W2 = d_linsolv_dif(rho_0, lda2) #tilde{w} part of w eqn
+    W2 = d_linsolv(flx, rho_0, 0.0, lda2) #tilde{w} part of w eqn
 
     M = build_mtx(W1,V1, W2, V2)
 
@@ -192,8 +194,11 @@ for n in range(30):
     rhs_tw = rho_init_d * w_0 - sc_pr_grad #rhs of the w equation
     rhs_v = rho_init_d * v_init #rhs of the v equation
     rhs_dual = np.concatenate((rhs_tw, rhs_v)) #build the vector on right hand side
-    twv = spm.spsolve(M, rhs_dual) #vector (tw, v)
+    twv = spsolve(M, rhs_dual) #vector (tw, v)
     tw, v = twv[:len(twv)//2], twv[len(twv)//2:]
+    # ax.plot(x_dual, tw, label=r"$\tilde{w}$, T_final")
+    # ax.plot(x_dual, v, label=r"$v$, T_final")   
+    # ax.legend()
 
    #Correction step: solving implicit non-linear problem for \rho and subsequently correcting w
     #-------------------------------------------------------------------------------------------
@@ -240,13 +245,13 @@ for n in range(30):
     #rho -= np.mean(rho) - np.mean(rho_0)
     rho_0 = rho.copy()
     """w^{n+1} correction"""
-    w = np.array([v_cor(tw[i], rho_0[i+1], rho_0[i], rho_init[i+1], rho_init[i], rho_0[i+1], rho_0[i], dt, gamma, cell_size) for i in range(0,N-1)])
+    w = np.array([v_cor(tw[i], rho_0[i+1], rho_0[i], rho_init[i+1], rho_init[i], rho[i+1], rho[i], dt, gamma, cell_size) for i in range(0,N-1)])
     w_0 = w.copy()
     v_init = v.copy()
     print("step:", n)
 
 ax.plot(x_prim, rho_0, label=r"$\rho$, T_final")
-ax.plot(x_dual, w, label=r"$w$, T_final")
+ax.plot(x_dual, w_0, label=r"$w$, T_final")
 ax.plot(x_dual, v_init, label=r"$v$, T_final")   
 ax.legend()
 L1_tot_final = np.sum(rho_0)
