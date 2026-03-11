@@ -237,7 +237,7 @@ for n in range(N_tstep):
         return r - rho_0 + safe_pow(dt, 2.0) * F(r)
     
     rho = anderson(G, rho, 2, 0.9, maxiter=50, f_tol=1e-12)
-    rho -= np.mean(rho) - np.mean(rho_0)
+    #rho -= np.mean(rho) - np.mean(rho_0)
     rho_0 = rho.copy()
     """w^{n+1} correction"""
     w = np.array([v_cor(tw[i], rho_0[i+1], rho_0[i], rho_init[i+1], rho_init[i], rho_0[i+1], rho_0[i], dt, gamma, cell_size) for i in range(0,N-1)])
