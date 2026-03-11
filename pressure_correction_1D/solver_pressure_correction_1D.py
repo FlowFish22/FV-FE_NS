@@ -245,8 +245,9 @@ for n in range(N_tstep):
     v_init = v.copy()
     print("step:", n)
 
+u_final = w_0 + v_init
 ax.plot(x_prim, rho_0, label=r"$\rho$, T_final")
-#ax.plot(x_dual, w_0, label=r"$w$, T_final")
+#ax.plot(x_dual, u_final, label=r"$u$, T_final")
 ax.legend()
 L1_tot_final = np.sum(rho_0)
 error_tot = L1_tot - L1_tot_final

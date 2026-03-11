@@ -15,7 +15,7 @@ class initial_condition:
         #u0 = 1.5 - 0.5 * np.tanh(x/0.1) #np.zeros_like(x)
         return (rho0)
     def disp_Riemann_u(x):
-        u0 = np.zeros_like_like(x) + 1.0
+        u0 = np.zeros_like(x) + 1.0
         return u0
     """smooth test case"""
     def sine_wave_rho(x):
