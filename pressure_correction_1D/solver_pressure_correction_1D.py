@@ -90,8 +90,8 @@ tf = 2.0
 kappa = 0.5
 nu = 0.1
 gamma = 2.0
-rho_initial_condition = fv.initial_condition.disp_Riemann_rho
-u_initial_condition = fv.initial_condition.disp_Riemann_u
+rho_initial_condition = fv.initial_condition.sine_wave_rho
+u_initial_condition = fv.initial_condition.sine_wave_u
 case = fv.computational_case(a =-20.0, b = 20.0, Tf = 0.5, N = 50, dt = 0.01, ng = 1)
 "-------initialization of the scheme--------------"
 a = case.a
