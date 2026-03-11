@@ -184,9 +184,9 @@ for n in range(3):
 
     """Matrix blocks corresponding to the linear system for solving tilde{w} and v"""
     W1 = d_linsolv(flx, rho_0, c1, c2) #tilde{w} part of tilde{w} eqn
-    V1 = d_linsolv(flx, rho_0, 0.0, -d) #v part of tilde{w} eqn
+    V1 = d_linsolv_dif(rho_0, d) #v part of tilde{w} eqn
     V2 = d_linsolv(flx, rho_0, c1, c3) #v part of v eqn
-    W2 = d_linsolv(flx, rho_0, 0.0, -lda2) #tilde{w} part of w eqn
+    W2 = d_linsolv_dif(rho_0, lda2) #tilde{w} part of w eqn
 
     M = build_mtx(W1,V1, W2, V2)
 
