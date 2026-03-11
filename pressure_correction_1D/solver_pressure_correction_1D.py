@@ -163,7 +163,7 @@ print(L1_tot)
 #------------------------
 """Time-looping begins"""
 #------------------------
-for n in range(3):
+for n in range(2):
     #Compute dual average of the discrete mass on the DUAL CELLS
     rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
     rho_0_d = np.array([(0.5 * (rho_0[i+1]+rho_0[i])) for i in range(0,N-1)])
@@ -189,12 +189,13 @@ for n in range(3):
     W2 = d_linsolv_dif(rho_0, lda2) #tilde{w} part of w eqn
 
     M = build_mtx(W1,V1, W2, V2)
+    M = M.tocsc()
 
     """Compute the intermediate effective velocity and the drift velocity"""
     rhs_tw = rho_init_d * w_0 - sc_pr_grad #rhs of the w equation
     rhs_v = rho_init_d * v_init #rhs of the v equation
     rhs_dual = np.concatenate((rhs_tw, rhs_v)) #build the vector on right hand side
-    twv = spsolve(M.T, rhs_dual) #vector (tw, v)
+    twv = spsolve(M, rhs_dual) #vector (tw, v)
     tw, v = twv[:len(twv)//2], twv[len(twv)//2:]
     # ax.plot(x_dual, tw, label=r"$\tilde{w}$, T_final")
     # ax.plot(x_dual, v, label=r"$v$, T_final")   
