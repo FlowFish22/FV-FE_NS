@@ -144,10 +144,14 @@ class solver_assembly:
     
         """
         N = len(flx) #len(rh) = N+1
+        N_c = N - 1
 
         i = np.arange(N)
         ip = (i + 1) % N
         im = (i - 1) % N
+
+        iR = (i + 1) % N_c
+        iL = i % N_c
 
         rows = np.repeat(i, 3)
 
@@ -160,17 +164,17 @@ class solver_assembly:
 
         #left
         data[0::3] = (
-            - c1 * (flx[i] + flx[im]) - c2 * rh[i]
+            - c1 * (flx[i] + flx[im]) - c2 * rh[iL]
         )
 
         #center
         data[1::3] = (
-            0.5 * (rh[i] + rh[i+1]) + c1 * (flx[ip] - flx[im]) + c2 * (rh[i] + rh[i+1])
+            0.5 * (rh[iL] + rh[iR]) + c1 * (flx[ip] - flx[im]) + c2 * (rh[iL] + rh[iR])
         )
 
         #right
         data[2::3] = (
-            c1 * (flx[ip] + flx[i]) - c2 * rh[i+1]
+            c1 * (flx[ip] + flx[i]) - c2 * rh[iR]
         )
 
         return coo_matrix((data, (rows, cols)), shape=(N, N)).tocsr()
