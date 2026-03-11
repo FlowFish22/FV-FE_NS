@@ -150,8 +150,8 @@ class solver_assembly:
         ip = (i + 1) % N
         im = (i - 1) % N
 
-        iR = (i + 1) % N_c
-        iL = i % N_c
+        iR = i + 1
+        iL = i 
 
         rows = np.repeat(i, 3)
 
