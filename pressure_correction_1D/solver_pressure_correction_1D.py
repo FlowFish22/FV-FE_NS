@@ -163,7 +163,7 @@ print(L1_tot)
 #------------------------
 """Time-looping begins"""
 #------------------------
-for n in range(2):
+for n in range(6):
     #Compute dual average of the discrete mass on the DUAL CELLS
     rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
     rho_0_d = np.array([(0.5 * (rho_0[i+1]+rho_0[i])) for i in range(0,N-1)])
@@ -190,13 +190,26 @@ for n in range(2):
 
     M = build_mtx(W1,V1, W2, V2)
     M = M.tocsc()
-    print("Residual:", np.linalg.norm(M @ x - b))
+    print(abs(M).max())
+    print(abs(M).min())
+    print("cond:", np.linalg.cond(M.toarray()))
+    print("print:", spm.svds(M, k=6)[1])
     """Compute the intermediate effective velocity and the drift velocity"""
     rhs_tw = rho_init_d * w_0 - sc_pr_grad #rhs of the w equation
     rhs_v = rho_init_d * v_init #rhs of the v equation
     rhs_dual = np.concatenate((rhs_tw, rhs_v)) #build the vector on right hand side
     twv = spsolve(M, rhs_dual) #vector (tw, v)
+    #twv -= twv.mean()
     tw, v = twv[:len(twv)//2], twv[len(twv)//2:]
+    r1 = W1 @ tw + V1 @ v - rhs_tw
+    r2 = W2 @ tw + V2 @ v - rhs_v
+
+    print("error tw:", np.linalg.norm(r1))
+    print("error v:", np.linalg.norm(r2))
+    print("Residual:", np.linalg.norm(M @ twv - rhs_dual))
+    print("growth track:", np.linalg.norm(twv[:len(twv)//2]))
+    print("growth track:", np.linalg.norm(twv[len(twv)//2:]))
+    print("check drift:", twv[:len(twv)].mean())
     # ax.plot(x_dual, tw, label=r"$\tilde{w}$, T_final")
     # ax.plot(x_dual, v, label=r"$v$, T_final")   
     # ax.legend()
