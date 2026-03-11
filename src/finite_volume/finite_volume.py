@@ -176,7 +176,6 @@ class solver_assembly:
         data[2::3] = (
             c1 * (flx[ip] + flx[i]) - c2 * rh[iR]
         )
-        print("matrix_update")
         return coo_matrix((data, (rows, cols)), shape=(N, N)).tocsr()
 
     def dual_linsolv_dif(rh, c):
