@@ -144,14 +144,14 @@ class solver_assembly:
     
         """
         N = len(flx) #len(rh) = N+1
-        N_c = N - 1
+        N_c = N + 1
 
         i = np.arange(N)
         ip = (i + 1) % N
         im = (i - 1) % N
 
-        iR = i + 1
-        iL = i 
+        iR = (i + 1) % N_c
+        iL = i % N_c
 
         rows = np.repeat(i, 3)
 
