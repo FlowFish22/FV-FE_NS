@@ -261,6 +261,6 @@ L1_tot_final = np.sum(rho_0)
 error_tot = L1_tot - L1_tot_final
 print(np.abs(error_tot)) 
 print(L1_tot_final)
-print(np.max(np.abs(M.sum(axis=1))))
+
 
 #%%
