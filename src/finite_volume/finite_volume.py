@@ -205,17 +205,17 @@ class solver_assembly:
 
         #left
         data[0::3] = (
-             c * rh[iL]
+             c * rh[im]
         )
 
         #center
         data[1::3] = (
-           - c * (rh[iL] + rh[iR])
+           - c * (rh[im] + rh[ip])
         )
 
         #right
         data[2::3] = (
-            c * rh[iR]
+            c * rh[ip]
         )
 
         return coo_matrix((data, (rows, cols)), shape=(N, N)).tocsr()
