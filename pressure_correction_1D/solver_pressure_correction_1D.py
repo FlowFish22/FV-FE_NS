@@ -79,7 +79,7 @@ def v_cor(w, r1, r2, r3, r4, R, L, d, gm, dx):
     term2 = term2_num / denom
     
     # Compute final corrected velocity
-    v = w + d * (v1 - term2)
+    v = w + d * (0.0 * v1 - term2)
     
     # Final safety check
     if not np.isfinite(v):
@@ -163,7 +163,7 @@ print(L1_tot)
 #------------------------
 """Time-looping begins"""
 #------------------------
-for n in range(10):
+for n in range(100):
     #Compute dual average of the discrete mass on the DUAL CELLS
     rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
     rho_0_d = np.array([(0.5 * (rho_0[i+1]+rho_0[i])) for i in range(0,N-1)])
@@ -191,7 +191,7 @@ for n in range(10):
     M = build_mtx(W1,V1, W2, V2)
     M = M.tocsc()
     """Compute the intermediate effective velocity and the drift velocity"""
-    rhs_tw = rho_init_d * w_0 - sc_pr_grad #rhs of the w equation
+    rhs_tw = rho_init_d * w_0 #- sc_pr_grad #rhs of the w equation
     rhs_v = rho_init_d * v_init #rhs of the v equation
     rhs_dual = np.concatenate((rhs_tw, rhs_v)) #build the vector on right hand side
     twv = spsolve(M, rhs_dual) #vector (tw, v)
