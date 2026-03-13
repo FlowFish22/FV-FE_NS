@@ -94,7 +94,7 @@ nu = 0.1
 gamma = 2.0
 rho_initial_condition = fv.initial_condition.sine_wave_rho
 u_initial_condition = fv.initial_condition.sine_wave_u
-case = fv.computational_case(a = 0.0, b = 2.0 * np.pi, Tf = 2.0, N = 1000, dt = 0.0001, ng = 1)
+case = fv.computational_case(a = 0.0, b = 0.5 * np.pi, Tf = 2.0, N = 10000, dt = 0.001, ng = 1)
 "-------initialization of the scheme--------------"
 a = case.a
 b = case.b
@@ -136,7 +136,7 @@ w_0 = np.array([u_0[i] - kappa * nu * v_init[i] for i in range(0,N+1)])
 #rho0 = initial_condition(x)[1]
 f, ax = plt.subplots(layout="constrained")
 ax.plot(x_prim, rho_init, label=r"$\rho^-1$")
-ax.plot(x_dual, u_0, label=r"$u_0$")
+#ax.plot(x_dual, u_0, label=r"$u_0$")
 ax.plot(x_dual, v_init, label=r"$\partial_x \ln(\rho)$")
 #ax.plot(x_dual, w_0, label=r"$w_0$")
 ax.set_xlabel("x")
@@ -166,7 +166,7 @@ build_mtx = fv.solver_assembly.build_matrix
 #------------------------
 """Time-looping begins"""
 #------------------------
-for n in range(0):
+for n in range(N_tstep):
     #Compute dual average of the discrete mass on the DUAL CELLS
     # rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
     rho_init_d = np.empty(len(rho_init)+1, dtype=rho_init.dtype)
@@ -189,70 +189,76 @@ for n in range(0):
     """Pressure scaling"""
     sc_pr_grad = np.sqrt(rho_0_d / rho_init_d) * pr_grad #the scaled pressure
 
-    ax.plot(x_dual, rho_init_d, label=r"$\rho^{-1}$ on edges")
-    ax.plot(x_dual, rho_0_d, label=r"$\rho^0$ on edges")
-    ax.plot(x_dual, sc_pr_grad, label=r"scaled presssure")
-    ax.legend()
+    # ax.plot(x_dual, rho_init_d, label=r"$\rho^{-1}$ on edges")
+    # ax.plot(x_dual, rho_0_d, label=r"$\rho^0$ on edges")
+    # #ax.plot(x_dual, sc_pr_grad, label=r"scaled presssure")
+    # ax.legend()
   
 
     #Prediction step: solve a linear system to get the intermediate effective vel. and the drift vel.
     #------------------------------------------------------------------------------------------------
-    #Effective velocity part of the numerical flux on the interfaces excluding external edges
-    # f_up = fv.convective_flux.flx_upwind
-    # f_ev = np.array([(f_up(rho_0[i], rho_0[i+1],w_0[i])) for i in range(0,N-1)])
-    # #Drift velocity part of the numerical flux on the interfaces excluding external edges
-    # f_dv = np.array([(rho_0[i+1] - rho_0[i])/cell_size for i in range(0,N-1)])
-    # #Flux = F_ev - kappa * nu * F_dv
-    # flx = np.array([(f_ev[i] - kappa * nu * f_dv[i]) for i in range(0,N-1)])
+    f_up = fv.convective_flux.flx_upwind
+    per_bd = fv.boundary_condition.per_bd
+    rho_0_per = per_bd(rho_0, nghost) #populating the ghost cells to compute fluxes on the external edges
+    #Effective velocity part of the numerical flux on the interfaces including external edges
+    f_ev = np.array([(f_up(rho_0_per[i], rho_0_per[i+1],w_0[i])) for i in range(0,N+1)])
+    #Drift velocity part of the numerical flux on the interfaces including external edges
+    f_dv = np.array([(rho_0[i+1] - rho_0[i])/cell_size for i in range(0,N-1)])
+    f_dv = np.empty(len(rho_0)+1, dtype=rho_0.dtype)
+    f_dv[1:-1] = (rho_0[1] - rho_0[:-1])/cell_size           
+    f_dv[0] = (rho_0[0] - rho_0[-1])/cell_size # left wrap
+    f_dv[-1] = (rho_0[0] - rho_0[-1])/cell_size  # right wrap to close periodicity
     
+    #Flux = F_ev - kappa * nu * F_dv
+    flx = f_ev - kappa * nu * f_dv
 
-    # """Matrix blocks corresponding to the linear system for solving tilde{w} and v"""
-    # W1 = d_linsolv(flx, rho_0, c1, c2) #tilde{w} part of tilde{w} eqn
-    # V1 = d_linsolv_dif(rho_0, d) #v part of tilde{w} eqn
-    # V2 = d_linsolv(flx, rho_0, c1, c3) #v part of v eqn
-    # W2 = d_linsolv_dif(rho_0, lda2) #tilde{w} part of w eqn
+    """Matrix blocks corresponding to the linear system for solving tilde{w} and v"""
+    W1 = d_linsolv(flx, rho_0, c1, c2) #tilde{w} part of tilde{w} eqn
+    V1 = d_linsolv_dif(rho_0, d) #v part of tilde{w} eqn
+    V2 = d_linsolv(flx, rho_0, c1, c3) #v part of v eqn
+    W2 = d_linsolv_dif(rho_0, lda2) #tilde{w} part of w eqn
 
-    # M = build_mtx(W1,V1, W2, V2)
-    # M = M.tocsc()
-    # """Compute the intermediate effective velocity and the drift velocity"""
-    # rhs_tw = rho_init_0_d * w_0 #- sc_pr_grad #rhs of the w equation
-    # rhs_v = rho_init_0_d * v_init #rhs of the v equation
-    # rhs_dual = np.concatenate((rhs_tw, rhs_v)) #build the vector on right hand side
-    # twv = spsolve(M, rhs_dual) #vector (tw, v)
-    # #twv -= twv.mean()
-    # tw, v = twv[:len(twv)//2], twv[len(twv)//2:]
+    M = build_mtx(W1,V1, W2, V2)
+    M = M.tocsc()
+    """Compute the intermediate effective velocity and the drift velocity"""
+    rhs_tw = rho_init_d * w_0 #- sc_pr_grad #rhs of the w equation
+    rhs_v = rho_init_d * v_init #rhs of the v equation
+    rhs_dual = np.concatenate((rhs_tw, rhs_v)) #build the vector on right hand side
+    twv = spsolve(M, rhs_dual) #vector (tw, v)
+    #twv -= twv.mean()
+    tw, v = twv[:len(twv)//2], twv[len(twv)//2:]
     
-#     # ax.plot(x_dual, tw, label=r"$\tilde{w}$, T_final")
-#     # ax.plot(x_dual, v, label=r"$v$, T_final")   
-#     # ax.legend()
+    #ax.plot(x_dual, tw, label=r"$\tilde{w}$")
+    # ax.plot(x_dual, v, label=r"$v$")   
+    # ax.legend()
 
-#    #Correction step: solving implicit non-linear problem for \rho and subsequently correcting w
-#     #-------------------------------------------------------------------------------------------
-#     """Description of the non-linear problem emerging from eleminating w^{n+1} in the correction steps"""
-#     def F(r):
-#         r = np.maximum(r, 1e-12)   # positivity safeguard
+   #Correction step: solving implicit non-linear problem for \rho and subsequently correcting w
+    #-------------------------------------------------------------------------------------------
+    """Description of the non-linear problem emerging from eleminating w^{n+1} in the correction steps"""
+    def F(r):
+        r = np.maximum(r, 1e-12)   # positivity safeguard
 
-#         f = np.zeros_like(r)
-#         N_d = N - 1 #number rof dual cells/ cell interfaces
-#         for i in range(N):
-#             ip = (i + 1) % N
-#             im = (i - 1) % N
+        f = np.zeros_like(r)
+        N_d = N + 1 #number of cell interfaces including the boundary
+        for i in range(N):
+            ip = (i + 1) % N
+            im = (i - 1) % N
 
-#             iR = i % N_d
-#             iL = (i - 1) % N_d
+            iR = i + 1
+            iL = i
 
-#             dtlap = (r[ip] - 2.0 * r[i] + r[im]) * lda2
+            dtlap = (r[ip] - 2.0 * r[i] + r[im]) * lda2
 
-#             flx_r = f_up(r[i], r[ip],
-#                       v_cor(tw[iR], rho_0[ip], rho_0[i], rho_init_0[ip], rho_init[i], r[ip], r[i], dt, gamma, cell_size))
-#             flx_l = f_up(r[im], r[i],
-#                       v_cor(tw[iL], rho_0[i], rho_0[im], rho_init[i], rho_init[im], r[i], r[im], dt, gamma, cell_size))
-#             f[i] = lda * (flx_r - flx_l) - kappa * nu * dtlap  #- rho_0[i]
+            flx_r = f_up(r[i], r[ip],
+                      v_cor(tw[iR], rho_0[ip], rho_0[i], rho_init[ip], rho_init[i], r[ip], r[i], dt, gamma, cell_size))
+            flx_l = f_up(r[im], r[i],
+                      v_cor(tw[iL], rho_0[i], rho_0[im], rho_init[i], rho_init[im], r[i], r[im], dt, gamma, cell_size))
+            f[i] = lda * (flx_r - flx_l) - kappa * nu * dtlap  #- rho_0[i]
 
-#         return f
+        return f
 
-#     rho_init = rho_0.copy()
-#     rho = rho_0.copy()
+    rho_init = rho_0.copy()
+    rho = rho_0.copy()
 #     max_iter = 100
 #     #Picard iteration for solving the non-linear problem for \rho^{n+1}
 #     # for k in range(max_iter):
@@ -264,23 +270,25 @@ for n in range(0):
 #     #         break
 
 #     #     rho = rho_new
-#     def G(r):
-#         return r - rho_0 + safe_pow(dt, 2.0) * F(r)
+    def G(r):
+        return r - rho_0 + safe_pow(dt, 2.0) * F(r)
     
-#     rho = anderson(G, rho, 2, 0.9, maxiter=50, f_tol=1e-12)
+    rho = anderson(G, rho, 2, 0.9, maxiter=50, f_tol=1e-12)
 #     #rho -= np.mean(rho) - np.mean(rho_0)
-    
-#     """w^{n+1} correction"""
-#     w = np.array([v_cor(tw[i], rho_0[i+1], rho_0[i], rho_init[i+1], rho_init[i], rho[i+1], rho[i], dt, gamma, cell_size) for i in range(0,N-1)])
-#     rho_0 = rho.copy()
-#     w_0 = w.copy()
-#     v_init = v.copy()
-#     print("step:", n)
+    rho_per = per_bd(rho, nghost)
+    rho_init_per = per_bd(rho_init, nghost)
+    """w^{n+1} correction"""
+    w = np.array([v_cor(tw[i], rho_0_per[i+1], rho_0_per[i], rho_init_per[i+1], 
+                        rho_init_per[i], rho_per[i+1], rho_per[i], dt, gamma, cell_size) for i in range(0,N+1)])
+    rho_0 = rho.copy()
+    w_0 = w.copy()
+    v_init = v.copy()
+    print("step:", n)
 
-#ax.plot(x_prim, rho_0, label=r"$\rho$, T_final")
-# ax.plot(x_dual, w_0, label=r"$w$, T_final")
-# ax.plot(x_dual, v_init, label=r"$v$, T_final")   
-# ax.legend()
+ax.plot(x_prim, rho, label=r"$\rho$, T_final")
+ax.plot(x_dual, w_0, label=r"$w$, T_final")
+ax.plot(x_dual, v_init, label=r"$v$, T_final")   
+ax.legend()
 # L1_tot_final = np.sum(rho_0)
 # error_tot = L1_tot - L1_tot_final
 # print(np.abs(error_tot)) 
