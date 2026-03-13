@@ -130,13 +130,13 @@ v_init[1:-1] = (rho_init[1:] - rho_init[:-1])/(cell_size * 0.5 * (rho_init[0] + 
 v_init[0] = (rho_init[0] - rho_init[-1])/(cell_size * 0.5 * (rho_init[0] + rho_init[-1]))                # left wrap
 v_init[-1] = (rho_init[0] - rho_init[-1])/(cell_size * 0.5 * (rho_init[0] + rho_init[-1]))               # right wrap to close periodicity
 #Compute the discrete EFFECTIVE VELOCITY on DUAL CELLS
-w_0 = np.array([u_0[i] - kappa * nu * v_init[i] for i in range(0,N+1)])
+w_0 = u_0 - kappa * nu * v_init
 #----------------------------------plot discretized initial data--------------------------------------------------
 #x = np.linspace(0, 1, num=int(1e2))
 #rho0 = initial_condition(x)[1]
 f, ax = plt.subplots(layout="constrained")
 ax.plot(x_prim, rho_init, label=r"$\rho^-1$")
-#ax.plot(x_dual, u_0, label=r"$u_0$")
+ax.plot(x_dual, u_0, label=r"$u_0$")
 ax.plot(x_dual, v_init, label=r"$\partial_x \ln(\rho)$")
 ax.plot(x_dual, w_0, label=r"$w_0$")
 ax.set_xlabel("x")
@@ -166,7 +166,7 @@ print(L1_tot)
 #------------------------
 """Time-looping begins"""
 #------------------------
-for n in range(0):
+for n in range(1000):
     #Compute dual average of the discrete mass on the DUAL CELLS
     # rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
     rho_init_d = np.empty(len(rho_init)+1, dtype=rho_init.dtype)
