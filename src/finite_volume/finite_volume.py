@@ -19,7 +19,7 @@ class initial_condition:
         return u0
     """smooth test case"""
     def sine_wave_rho(x):
-        rho0 = 2.0 + np.sin(x)
+        rho0 = 1.0 + np.exp(-x * x)
         #u0 = 1.0 + np.cos(x) #np.zeros_like(x)
         return (rho0)
     def sine_wave_u(x):
