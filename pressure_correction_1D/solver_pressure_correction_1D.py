@@ -94,7 +94,7 @@ nu = 0.1
 gamma = 2.0
 rho_initial_condition = fv.initial_condition.gaussian_rho
 u_initial_condition = fv.initial_condition.cos_wave_u
-case = fv.computational_case(a = 0.0, b = 1.0, Tf = 0.5, N = 100, dt = 0.001, ng = 1)
+case = fv.computational_case(a = -np.pi, b = np.pi, Tf = 0.5, N = 100, dt = 0.001, ng = 1)
 "-------initialization of the scheme--------------"
 a = case.a
 b = case.b
@@ -137,8 +137,8 @@ w_0 = u_0 - kappa * nu * v_init
 f, ax = plt.subplots(layout="constrained")
 ax.plot(x_prim, rho_init, label=r"$\rho^-1$")
 ax.plot(x_dual, u_0, label=r"$u_0$")
-ax.plot(x_dual, v_init, label=r"$\partial_x \ln(\rho)$")
-ax.plot(x_dual, w_0, label=r"$w_0$")
+#ax.plot(x_dual, v_init, label=r"$\partial_x \ln(\rho)$")
+#ax.plot(x_dual, w_0, label=r"$w_0$")
 ax.set_xlabel("x")
 ax.set_title("Initial condition")
 ax.legend()
@@ -153,9 +153,9 @@ A = p_linsolv(w_0, lda, c, neg, pos)
 #------------Solving for rho^0 from the corresponding linear problem--------------------------------------------------
 rho_0 = spm.spsolve(A, rho_init)
 #v_0 = np.array([((rho_0[i+1]- rho_0[i])/(cell_size * 0.5 * (rho_0[i+1] + rho_0[i]))) for i in range(0,N-1)])
-ax.plot(x_prim, rho_0, label=r"$\rho^0$")
+#ax.plot(x_prim, rho_0, label=r"$\rho^0$")
 #ax.plot(x_dual, v_0, label=r"$v^0$")
-ax.legend()
+#ax.legend()
 
 d_linsolv = fv.solver_assembly.dual_linsolv
 d_linsolv_dif = fv.solver_assembly.dual_linsolv_dif
