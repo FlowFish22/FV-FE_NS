@@ -94,7 +94,7 @@ nu = 0.1
 gamma = 2.0
 rho_initial_condition = fv.initial_condition.sine_wave_rho
 u_initial_condition = fv.initial_condition.sine_wave_u
-case = fv.computational_case(a = 0.0, b = 0.5 * np.pi, Tf = 0.5, N = 10000, dt = 0.0001, ng = 1)
+case = fv.computational_case(a = 0.0, b = 2.0 * np.pi, Tf = 0.5, N = 10000, dt = 0.0001, ng = 1)
 "-------initialization of the scheme--------------"
 a = case.a
 b = case.b
@@ -138,7 +138,7 @@ f, ax = plt.subplots(layout="constrained")
 ax.plot(x_prim, rho_init, label=r"$\rho^-1$")
 #ax.plot(x_dual, u_0, label=r"$u_0$")
 ax.plot(x_dual, v_init, label=r"$\partial_x \ln(\rho)$")
-#ax.plot(x_dual, w_0, label=r"$w_0$")
+ax.plot(x_dual, w_0, label=r"$w_0$")
 ax.set_xlabel("x")
 ax.set_title("Initial condition")
 ax.legend()
@@ -166,7 +166,7 @@ build_mtx = fv.solver_assembly.build_matrix
 #------------------------
 """Time-looping begins"""
 #------------------------
-for n in range(100):
+for n in range(10):
     #Compute dual average of the discrete mass on the DUAL CELLS
     # rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
     rho_init_d = np.empty(len(rho_init)+1, dtype=rho_init.dtype)
@@ -286,7 +286,7 @@ for n in range(100):
     v_init = v.copy()
     print("step:", n)
 
-ax.plot(x_prim, rho, label=r"$\rho$, T_final")
+ax.plot(x_prim, rho_0, label=r"$\rho$, T_final")
 ax.plot(x_dual, w_0, label=r"$w$, T_final")
 ax.plot(x_dual, v_init, label=r"$v$, T_final")   
 ax.legend()
