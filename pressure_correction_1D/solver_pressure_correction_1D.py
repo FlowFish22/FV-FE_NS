@@ -94,7 +94,7 @@ nu = 0.1
 gamma = 2.0
 rho_initial_condition = fv.initial_condition.sine_wave_rho
 u_initial_condition = fv.initial_condition.sine_wave_u
-case = fv.computational_case(a = 0.0, b = 0.5 * np.pi, Tf = 2.0, N = 10000, dt = 0.001, ng = 1)
+case = fv.computational_case(a = 0.0, b = 0.5 * np.pi, Tf = 0.5, N = 10000, dt = 0.0001, ng = 1)
 "-------initialization of the scheme--------------"
 a = case.a
 b = case.b
@@ -166,7 +166,7 @@ build_mtx = fv.solver_assembly.build_matrix
 #------------------------
 """Time-looping begins"""
 #------------------------
-for n in range(N_tstep):
+for n in range(100):
     #Compute dual average of the discrete mass on the DUAL CELLS
     # rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
     rho_init_d = np.empty(len(rho_init)+1, dtype=rho_init.dtype)
@@ -257,7 +257,7 @@ for n in range(N_tstep):
 
         return f
 
-    rho_init = rho_0.copy()
+    
     rho = rho_0.copy()
 #     max_iter = 100
 #     #Picard iteration for solving the non-linear problem for \rho^{n+1}
@@ -271,7 +271,7 @@ for n in range(N_tstep):
 
 #     #     rho = rho_new
     def G(r):
-        return r - rho_0 + safe_pow(dt, 2.0) * F(r)
+        return r - rho_0 + F(r)
     
     rho = anderson(G, rho, 2, 0.9, maxiter=50, f_tol=1e-12)
 #     #rho -= np.mean(rho) - np.mean(rho_0)
@@ -280,6 +280,7 @@ for n in range(N_tstep):
     """w^{n+1} correction"""
     w = np.array([v_cor(tw[i], rho_0_per[i+1], rho_0_per[i], rho_init_per[i+1], 
                         rho_init_per[i], rho_per[i+1], rho_per[i], dt, gamma, cell_size) for i in range(0,N+1)])
+    rho_init = rho_0.copy()
     rho_0 = rho.copy()
     w_0 = w.copy()
     v_init = v.copy()
