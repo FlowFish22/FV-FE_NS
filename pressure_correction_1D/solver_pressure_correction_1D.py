@@ -94,7 +94,7 @@ nu = 0.1
 gamma = 2.0
 rho_initial_condition = fv.initial_condition.sine_wave_rho
 u_initial_condition = fv.initial_condition.sine_wave_u
-case = fv.computational_case(a = 0.0, b = 2.0 * np.pi, Tf = 0.5, N = 100, dt = 0.001, ng = 1)
+case = fv.computational_case(a = 0.0, b = 1.0, Tf = 0.5, N = 100, dt = 0.001, ng = 1)
 "-------initialization of the scheme--------------"
 a = case.a
 b = case.b
@@ -286,14 +286,14 @@ for n in range(0):
     v_init = v.copy()
     print("step:", n)
 
-ax.plot(x_prim, rho_0, label=r"$\rho$, T_final")
-ax.plot(x_dual, w_0, label=r"$w$, T_final")
-ax.plot(x_dual, v_init, label=r"$v$, T_final")   
-ax.legend()
-L1_tot_final = np.sum(rho_0)
-error_tot = L1_tot - L1_tot_final
-print(np.abs(error_tot)) 
-print(L1_tot_final)
+#ax.plot(x_prim, rho_0, label=r"$\rho$, T_final")
+#ax.plot(x_dual, w_0, label=r"$w$, T_final")
+#ax.plot(x_dual, v_init, label=r"$v$, T_final")   
+#ax.legend()
+#L1_tot_final = np.sum(rho_0)
+#error_tot = L1_tot - L1_tot_final
+#print(np.abs(error_tot)) 
+#print(L1_tot_final)
 
 
 #%%
