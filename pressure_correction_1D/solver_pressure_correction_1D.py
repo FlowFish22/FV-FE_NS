@@ -92,8 +92,8 @@ tf = 2.0
 kappa = 0.5
 nu = 0.1
 gamma = 2.0
-rho_initial_condition = fv.initial_condition.sine_wave_rho
-u_initial_condition = fv.initial_condition.sine_wave_u
+rho_initial_condition = fv.initial_condition.gaussian_rho
+u_initial_condition = fv.initial_condition.cos_wave_u
 case = fv.computational_case(a = 0.0, b = 1.0, Tf = 0.5, N = 100, dt = 0.001, ng = 1)
 "-------initialization of the scheme--------------"
 a = case.a
