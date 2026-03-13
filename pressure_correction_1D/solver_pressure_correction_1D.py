@@ -161,12 +161,12 @@ d_linsolv = fv.solver_assembly.dual_linsolv
 d_linsolv_dif = fv.solver_assembly.dual_linsolv_dif
 build_mtx = fv.solver_assembly.build_matrix
 # #------------------------------------------------------------------------------------------------------------------
-# L1_tot = np.sum(rho_0)
-# print(L1_tot)
+L1_tot = np.sum(rho_0)
+print(L1_tot)
 #------------------------
 """Time-looping begins"""
 #------------------------
-for n in range(1000):
+for n in range(0):
     #Compute dual average of the discrete mass on the DUAL CELLS
     # rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
     rho_init_d = np.empty(len(rho_init)+1, dtype=rho_init.dtype)
@@ -290,10 +290,10 @@ ax.plot(x_prim, rho_0, label=r"$\rho$, T_final")
 ax.plot(x_dual, w_0, label=r"$w$, T_final")
 ax.plot(x_dual, v_init, label=r"$v$, T_final")   
 ax.legend()
-# L1_tot_final = np.sum(rho_0)
-# error_tot = L1_tot - L1_tot_final
-# print(np.abs(error_tot)) 
-# print(L1_tot_final)
+L1_tot_final = np.sum(rho_0)
+error_tot = L1_tot - L1_tot_final
+print(np.abs(error_tot)) 
+print(L1_tot_final)
 
 
 #%%
