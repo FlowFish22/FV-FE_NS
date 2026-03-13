@@ -96,8 +96,8 @@ class solver_assembly:
 
         a[i] corresponds to the interface between the cells i, and i+1
         """
-        Nc = len(a) #Internal edges
-        N = Nc + 1 #Cells
+        Nc = len(a) #Internal and external dges
+        N = Nc - 1 #Cells
 
         i = np.arange(N)
 
@@ -106,8 +106,8 @@ class solver_assembly:
         im = (i - 1) % N
 
         # periodic cell indices
-        iR = i % Nc
-        iL = (i - 1) % Nc
+        iR = (i + 1) % Nc
+        iL = i % Nc
         
         # each row has exactly 3 entries (allocated in COO structure)
         rows = np.repeat(np.arange(N), 3)
@@ -143,15 +143,15 @@ class solver_assembly:
         with periodic wrap:
     
         """
-        N = len(flx) #len(rh) = N+1
-        N_c = N + 1
+        N = len(flx) #len(rh) = N - 1
+        N_c = N - 1
 
         i = np.arange(N)
         ip = (i + 1) % N
         im = (i - 1) % N
 
-        iR = (i + 1) % N_c
-        iL = i % N_c
+        iR = i % N_c
+        iL = (i - 1) % N_c
 
         rows = np.repeat(i, 3)
 
@@ -164,17 +164,17 @@ class solver_assembly:
 
         #left
         data[0::3] = (
-            - c1 * (flx[i] + flx[im]) - c2 * rh[i]
+            - c1 * (flx[i] + flx[im]) - c2 * rh[iL]
         )
 
         #center
         data[1::3] = (
-            0.5 * (rh[im] + rh[i]) + c1 * (flx[ip] - flx[im]) + c2 * (rh[i] + rh[ip])
+            0.5 * (rh[iL] + rh[iR]) + c1 * (flx[ip] - flx[im]) + c2 * (rh[iL] + rh[iR])
         )
 
         #right
         data[2::3] = (
-            c1 * (flx[ip] + flx[i]) - c2 * rh[ip]
+            c1 * (flx[ip] + flx[i]) - c2 * rh[iR]
         )
         return coo_matrix((data, (rows, cols)), shape=(N, N)).tocsr()
 
@@ -184,15 +184,15 @@ class solver_assembly:
         with periodic wrap:
     
         """
-        N = len(rh) - 1 #len(rh) = N+1
-        N_c = N + 1 
+        N = len(rh) + 1
+        N_c = len(rh)
         
         i = np.arange(N)
         ip = (i + 1) % N
         im = (i - 1) % N
 
-        iR = (i + 1) % N_c
-        iL = i % N_c
+        iR = i % N_c
+        iL = (i - 1) % N_c
 
         rows = np.repeat(i, 3)
 
@@ -205,19 +205,19 @@ class solver_assembly:
 
         #left
         data[0::3] = (
-             c * rh[i]
+             c * rh[iL]
         )
 
         #center
         data[1::3] = (
-           - c * (rh[i] + rh[ip])
+           - c * (rh[iL] + rh[iR])
         )
 
         #right
         data[2::3] = (
-            c * rh[ip]
+            c * rh[iR]
         )
-
+        
         return coo_matrix((data, (rows, cols)), shape=(N, N)).tocsr()
     
     def build_matrix(a, b, c, d):

@@ -145,61 +145,82 @@ ax.legend()
 #-------------------------------------------------------------------------------------------------------------------
 # """-----------------------Update steps---------------------"""
 # """Compute rho^0 (PRIMAL CELLS): solve a linear system"""
-# f_up = fv.convective_flux.flx_upwind
-# #-------------Entries of the sparse (M-)matrix A corresponding to the update for rho^0------------------------------
-# p_linsolv = fv.solver_assembly.primal_linsolv_periodic
-# A = p_linsolv(w_0, lda, c, neg, pos)
-# #--------------------------------------------------------------------------------------------------------------------
-# #------------Solving for rho^0 from the corresponding linear problem--------------------------------------------------
-# rho_0 = spm.spsolve(A, rho_init)
-# v_0 = np.array([((rho_0[i+1]- rho_0[i])/(cell_size * 0.5 * (rho_0[i+1] + rho_0[i]))) for i in range(0,N-1)])
-# ax.plot(x_prim, rho_0, label=r"$\rho^0$")
-# ax.plot(x_dual, v_0, label=r"$v^0$")
-# ax.legend()
+f_up = fv.convective_flux.flx_upwind
+#-------------Entries of the sparse (M-)matrix A corresponding to the update for rho^0------------------------------
+p_linsolv = fv.solver_assembly.primal_linsolv_periodic
+A = p_linsolv(w_0, lda, c, neg, pos)
+#--------------------------------------------------------------------------------------------------------------------
+#------------Solving for rho^0 from the corresponding linear problem--------------------------------------------------
+rho_0 = spm.spsolve(A, rho_init)
+#v_0 = np.array([((rho_0[i+1]- rho_0[i])/(cell_size * 0.5 * (rho_0[i+1] + rho_0[i]))) for i in range(0,N-1)])
+ax.plot(x_prim, rho_0, label=r"$\rho^0$")
+#ax.plot(x_dual, v_0, label=r"$v^0$")
+ax.legend()
 
-# d_linsolv = fv.solver_assembly.dual_linsolv
-# d_linsolv_dif = fv.solver_assembly.dual_linsolv_dif
-# build_mtx = fv.solver_assembly.build_matrix
+d_linsolv = fv.solver_assembly.dual_linsolv
+d_linsolv_dif = fv.solver_assembly.dual_linsolv_dif
+build_mtx = fv.solver_assembly.build_matrix
 # #------------------------------------------------------------------------------------------------------------------
 # L1_tot = np.sum(rho_0)
 # print(L1_tot)
-# #------------------------
-# """Time-looping begins"""
-# #------------------------
-# for n in range(100):
-#     #Compute dual average of the discrete mass on the DUAL CELLS
-#     rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
-#     rho_0_d = np.array([(0.5 * (rho_0[i+1]+rho_0[i])) for i in range(0,N-1)])
-
-#     #Pressure scaling step: compute the scaled pressure gradient on the DUAL CELLS
-#     sc_pr_grad = np.array([(math.sqrt(rho_0_d[i]/rho_init_d[i]) * (safe_pow(rho_0[i+1], gamma) - safe_pow(rho_0[i], gamma))/cell_size) for i in range(0,N-1)])
+#------------------------
+"""Time-looping begins"""
+#------------------------
+for n in range(0):
+    #Compute dual average of the discrete mass on the DUAL CELLS
+    # rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
+    rho_init_d = np.empty(len(rho_init)+1, dtype=rho_init.dtype)
+    rho_init_d[1:-1] = 0.5 * (rho_init[1:] + rho_init[:-1])          
+    rho_init_d[0] = 0.5 * (rho_init[0] + rho_init[-1])   # left wrap
+    rho_init_d[-1] = 0.5 * (rho_init[0] + rho_init[-1])  # right wrap to close periodicity
     
-#     #Prediction step: solve a linear system to get the intermediate effective vel. and the drift vel.
-#     #------------------------------------------------------------------------------------------------
-#     #Effective velocity part of the numerical flux on the interfaces excluding external edges
-#     f_up = fv.convective_flux.flx_upwind
-#     f_ev = np.array([(f_up(rho_0[i], rho_0[i+1],w_0[i])) for i in range(0,N-1)])
-#     #Drift velocity part of the numerical flux on the interfaces excluding external edges
-#     f_dv = np.array([(rho_0[i+1] - rho_0[i])/cell_size for i in range(0,N-1)])
-#     #Flux = F_ev - kappa * nu * F_dv
-#     flx = np.array([(f_ev[i] - kappa * nu * f_dv[i]) for i in range(0,N-1)])
+    rho_0_d = np.empty(len(rho_0)+1, dtype=rho_0.dtype)
+    rho_0_d[1:-1] = 0.5 * (rho_0[1:] + rho_0[:-1])          
+    rho_0_d[0] = 0.5 * (rho_0[0] + rho_0[-1])   # left wrap
+    rho_0_d[-1] = 0.5 * (rho_0[0] + rho_0[-1])  # right wrap to close periodicity
     
 
-#     """Matrix blocks corresponding to the linear system for solving tilde{w} and v"""
-#     W1 = d_linsolv(flx, rho_0, c1, c2) #tilde{w} part of tilde{w} eqn
-#     V1 = d_linsolv_dif(rho_0, d) #v part of tilde{w} eqn
-#     V2 = d_linsolv(flx, rho_0, c1, c3) #v part of v eqn
-#     W2 = d_linsolv_dif(rho_0, lda2) #tilde{w} part of w eqn
+    #Pressure scaling step: compute the scaled pressure gradient on the DUAL CELLS
+    """Pressure gradient from the previous step"""
+    pr_grad = np.empty(len(rho_0)+1, dtype=rho_0.dtype)
+    pr_grad[1:-1] = (safe_pow(rho_0[1:], gamma) - safe_pow(rho_0[:-1], gamma))/cell_size       
+    pr_grad[0] = (safe_pow(rho_0[0], gamma) - safe_pow(rho_0[-1], gamma))/cell_size  # left wrap
+    pr_grad[-1] = (safe_pow(rho_0[0], gamma) - safe_pow(rho_0[-1], gamma))/cell_size  # right wrap to close periodicity
+    """Pressure scaling"""
+    sc_pr_grad = np.sqrt(rho_0_d / rho_init_d) * pr_grad #the scaled pressure
 
-#     M = build_mtx(W1,V1, W2, V2)
-#     M = M.tocsc()
-#     """Compute the intermediate effective velocity and the drift velocity"""
-#     rhs_tw = rho_init_d * w_0 #- sc_pr_grad #rhs of the w equation
-#     rhs_v = rho_init_d * v_init #rhs of the v equation
-#     rhs_dual = np.concatenate((rhs_tw, rhs_v)) #build the vector on right hand side
-#     twv = spsolve(M, rhs_dual) #vector (tw, v)
-#     #twv -= twv.mean()
-#     tw, v = twv[:len(twv)//2], twv[len(twv)//2:]
+    ax.plot(x_dual, rho_init_d, label=r"$\rho^{-1}$ on edges")
+    ax.plot(x_dual, rho_0_d, label=r"$\rho^0$ on edges")
+    ax.plot(x_dual, sc_pr_grad, label=r"scaled presssure")
+    ax.legend()
+  
+
+    #Prediction step: solve a linear system to get the intermediate effective vel. and the drift vel.
+    #------------------------------------------------------------------------------------------------
+    #Effective velocity part of the numerical flux on the interfaces excluding external edges
+    # f_up = fv.convective_flux.flx_upwind
+    # f_ev = np.array([(f_up(rho_0[i], rho_0[i+1],w_0[i])) for i in range(0,N-1)])
+    # #Drift velocity part of the numerical flux on the interfaces excluding external edges
+    # f_dv = np.array([(rho_0[i+1] - rho_0[i])/cell_size for i in range(0,N-1)])
+    # #Flux = F_ev - kappa * nu * F_dv
+    # flx = np.array([(f_ev[i] - kappa * nu * f_dv[i]) for i in range(0,N-1)])
+    
+
+    # """Matrix blocks corresponding to the linear system for solving tilde{w} and v"""
+    # W1 = d_linsolv(flx, rho_0, c1, c2) #tilde{w} part of tilde{w} eqn
+    # V1 = d_linsolv_dif(rho_0, d) #v part of tilde{w} eqn
+    # V2 = d_linsolv(flx, rho_0, c1, c3) #v part of v eqn
+    # W2 = d_linsolv_dif(rho_0, lda2) #tilde{w} part of w eqn
+
+    # M = build_mtx(W1,V1, W2, V2)
+    # M = M.tocsc()
+    # """Compute the intermediate effective velocity and the drift velocity"""
+    # rhs_tw = rho_init_0_d * w_0 #- sc_pr_grad #rhs of the w equation
+    # rhs_v = rho_init_0_d * v_init #rhs of the v equation
+    # rhs_dual = np.concatenate((rhs_tw, rhs_v)) #build the vector on right hand side
+    # twv = spsolve(M, rhs_dual) #vector (tw, v)
+    # #twv -= twv.mean()
+    # tw, v = twv[:len(twv)//2], twv[len(twv)//2:]
     
 #     # ax.plot(x_dual, tw, label=r"$\tilde{w}$, T_final")
 #     # ax.plot(x_dual, v, label=r"$v$, T_final")   
@@ -223,7 +244,7 @@ ax.legend()
 #             dtlap = (r[ip] - 2.0 * r[i] + r[im]) * lda2
 
 #             flx_r = f_up(r[i], r[ip],
-#                       v_cor(tw[iR], rho_0[ip], rho_0[i], rho_init[ip], rho_init[i], r[ip], r[i], dt, gamma, cell_size))
+#                       v_cor(tw[iR], rho_0[ip], rho_0[i], rho_init_0[ip], rho_init[i], r[ip], r[i], dt, gamma, cell_size))
 #             flx_l = f_up(r[im], r[i],
 #                       v_cor(tw[iL], rho_0[i], rho_0[im], rho_init[i], rho_init[im], r[i], r[im], dt, gamma, cell_size))
 #             f[i] = lda * (flx_r - flx_l) - kappa * nu * dtlap  #- rho_0[i]
@@ -256,7 +277,7 @@ ax.legend()
 #     v_init = v.copy()
 #     print("step:", n)
 
-# ax.plot(x_prim, rho_0, label=r"$\rho$, T_final")
+#ax.plot(x_prim, rho_0, label=r"$\rho$, T_final")
 # ax.plot(x_dual, w_0, label=r"$w$, T_final")
 # ax.plot(x_dual, v_init, label=r"$v$, T_final")   
 # ax.legend()
