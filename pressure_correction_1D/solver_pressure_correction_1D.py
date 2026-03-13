@@ -93,7 +93,7 @@ kappa = 0.5
 nu = 0.1
 gamma = 2.0
 rho_initial_condition = fv.initial_condition.gaussian_rho
-u_initial_condition = fv.initial_condition.cos_wave_u
+u_initial_condition = fv.initial_condition.constant_u
 case = fv.computational_case(a = -np.pi, b = np.pi, Tf = 0.5, N = 100, dt = 0.001, ng = 1)
 "-------initialization of the scheme--------------"
 a = case.a
@@ -286,10 +286,10 @@ for n in range(0):
     v_init = v.copy()
     print("step:", n)
 
-#ax.plot(x_prim, rho_0, label=r"$\rho$, T_final")
-#ax.plot(x_dual, w_0, label=r"$w$, T_final")
+ax.plot(x_prim, rho_0, label=r"$\rho$, T_final")
+ax.plot(x_dual, w_0, label=r"$w$, T_final")
 #ax.plot(x_dual, v_init, label=r"$v$, T_final")   
-#ax.legend()
+ax.legend()
 #L1_tot_final = np.sum(rho_0)
 #error_tot = L1_tot - L1_tot_final
 #print(np.abs(error_tot)) 
