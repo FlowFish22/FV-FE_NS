@@ -94,7 +94,7 @@ nu = 0.1
 gamma = 2.0
 rho_initial_condition = fv.initial_condition.gaussian_rho
 u_initial_condition = fv.initial_condition.constant_u
-case = fv.computational_case(a = -np.pi, b = np.pi, Tf = 0.5, N = 100, dt = 0.001, ng = 1)
+case = fv.computational_case(a = -np.pi, b = np.pi, Tf = 0.5, N = 50, dt = 0.01, ng = 1)
 "-------initialization of the scheme--------------"
 a = case.a
 b = case.b
@@ -166,7 +166,8 @@ print(L1_tot)
 #------------------------
 """Time-looping begins"""
 #------------------------
-for n in range(0):
+num_steps = 100
+for n in range(num_steps):
     #Compute dual average of the discrete mass on the DUAL CELLS
     # rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
     rho_init_d = np.empty(len(rho_init)+1, dtype=rho_init.dtype)
@@ -259,22 +260,22 @@ for n in range(0):
 
     
     rho = rho_0.copy()
-#     max_iter = 100
-#     #Picard iteration for solving the non-linear problem for \rho^{n+1}
-#     # for k in range(max_iter):
+    max_iter = 50
+    #Picard iteration for solving the non-linear problem for \rho^{n+1}
+    for k in range(max_iter):
 
-#     #     r = F(rho)        # uses implicit flux evaluation
-#     #     rho_new = rho_0 - r
-#     #     r1 = (1.0 - 0.3) * rho + 0.3 * rho_new
-#     #     if np.linalg.norm(rho_new - r1) < 1e-10:
-#     #         break
+        r = F(rho)        # uses implicit flux evaluation
+        rho_new = rho_0 - r
+        r1 = (1.0 - 0.3) * rho + 0.3 * rho_new
+        if np.linalg.norm(rho_new - r1) < 1e-12:
+            break
 
-#     #     rho = rho_new
+        rho = rho_new
     def G(r):
         return r - rho_0 + F(r)
     
     rho = anderson(G, rho, 2, 0.9, maxiter=50, f_tol=1e-12)
-#     #rho -= np.mean(rho) - np.mean(rho_0)
+    #rho -= np.mean(rho) - np.mean(rho_0)
     rho_per = per_bd(rho, nghost)
     rho_init_per = per_bd(rho_init, nghost)
     """w^{n+1} correction"""
@@ -286,14 +287,28 @@ for n in range(0):
     v_init = v.copy()
     print("step:", n)
 
+tv = np.empty(len(rho_init)+1, dtype=rho_init.dtype)
+tv[1:-1] = (rho_init[1:] - rho_init[:-1])/(cell_size * 0.5 * (rho_init[0] + rho_init[-1]))          # normal differences
+tv[0] = (rho_init[0] - rho_init[-1])/(cell_size * 0.5 * (rho_init[0] + rho_init[-1]))                # left wrap
+tv[-1] = (rho_init[0] - rho_init[-1])/(cell_size * 0.5 * (rho_init[0] + rho_init[-1]))               # right wrap to close periodicity
 ax.plot(x_prim, rho_0, label=r"$\rho$, T_final")
 ax.plot(x_dual, w_0, label=r"$w$, T_final")
-#ax.plot(x_dual, v_init, label=r"$v$, T_final")   
+#ax.plot(x_dual, v_init, label=r"$v$, T_final")  
+u = w_0 + kappa * nu * v_init
+ax.plot(x_dual, u, label=r"$u$, T_final")
+ax.plot(x_dual, v_init, label=r"$v$, T_final")
+ax.plot(x_dual, tv, label=r"$\tilde{v}$, T_final")
 ax.legend()
-#L1_tot_final = np.sum(rho_0)
-#error_tot = L1_tot - L1_tot_final
-#print(np.abs(error_tot)) 
-#print(L1_tot_final)
+L1_tot_final = np.sum(rho_0)
+error_tot = L1_tot - L1_tot_final
+print(np.abs(error_tot)) 
+print(L1_tot_final)
+error_v = v_init - tv
+norm_error_v = math.sqrt(cell_size) * np.abs(error_v)
+print("error_v:", norm_error_v)
+#print("L2_error_v:", L2_error_v)
+T_f = num_steps * dt
+print("Final T:", T_f)
 
 
 #%%

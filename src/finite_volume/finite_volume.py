@@ -27,10 +27,10 @@ class initial_condition:
         return (u0)
     """1D Gaussian"""
     def gaussian_rho(x):
-        z = 2*(x - 0.5)
+        z = 2*x
         return np.where(np.abs(z) < 1, 1.0 + np.exp(-1/(1 - z**2)), 1.0)
-    def cos_wave_u(x):
-        u0 = np.cos(x)
+    def constant_u(x):
+        u0 = 0.1 + np.zeros_like(x)
         return (u0)
 
 
