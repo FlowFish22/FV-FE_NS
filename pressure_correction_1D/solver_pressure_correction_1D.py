@@ -94,7 +94,7 @@ nu = 1.0
 gamma = 2.0
 rho_initial_condition = fv.initial_condition.gaussian_rho
 u_initial_condition = fv.initial_condition.constant_u
-case = fv.computational_case(a = -1.0, b = 1.0, Tf = 0.5, N = 1000, dt = 0.001, ng = 1)
+case = fv.computational_case(a = -1.0, b = 1.0, Tf = 0.5, N = 100, dt = 0.01, ng = 1)
 "-------initialization of the scheme--------------"
 a = case.a
 b = case.b
@@ -271,10 +271,10 @@ for n in range(num_steps):
             break
 
         rho = rho_new
-    def G(r):
-         return r - rho_0 + F(r)
+    # def G(r):
+    #      return r - rho_0 + F(r)
     
-    rho = anderson(G, rho, 2, 0.9, maxiter=100, f_tol=1e-12)
+    # rho = anderson(G, rho, 2, 0.9, maxiter=100, f_tol=1e-12)
     #rho -= np.mean(rho) - np.mean(rho_0)
     rho_per = per_bd(rho, nghost)
     rho_init_per = per_bd(rho_init, nghost)
