@@ -89,12 +89,12 @@ def v_cor(w, r1, r2, r3, r4, R, L, d, gm, dx):
 
 
 tf = 2.0
-kappa = 0.5
-nu = 0.1
+kappa = 0.25
+nu = 1.0
 gamma = 2.0
 rho_initial_condition = fv.initial_condition.gaussian_rho
 u_initial_condition = fv.initial_condition.constant_u
-case = fv.computational_case(a = -np.pi, b = np.pi, Tf = 0.5, N = 50, dt = 0.01, ng = 1)
+case = fv.computational_case(a = -1.0, b = 1.0, Tf = 0.5, N = 1000, dt = 0.001, ng = 1)
 "-------initialization of the scheme--------------"
 a = case.a
 b = case.b
@@ -153,7 +153,7 @@ A = p_linsolv(w_0, lda, c, neg, pos)
 #------------Solving for rho^0 from the corresponding linear problem--------------------------------------------------
 rho_0 = spm.spsolve(A, rho_init)
 #v_0 = np.array([((rho_0[i+1]- rho_0[i])/(cell_size * 0.5 * (rho_0[i+1] + rho_0[i]))) for i in range(0,N-1)])
-#ax.plot(x_prim, rho_0, label=r"$\rho^0$")
+#ax.plot(x_prim, rho_0, label=r"$\rho^0$, lin_solve")
 #ax.plot(x_dual, v_0, label=r"$v^0$")
 #ax.legend()
 
@@ -166,7 +166,7 @@ print(L1_tot)
 #------------------------
 """Time-looping begins"""
 #------------------------
-num_steps = 100
+num_steps = 1
 for n in range(num_steps):
     #Compute dual average of the discrete mass on the DUAL CELLS
     # rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
@@ -260,7 +260,7 @@ for n in range(num_steps):
 
     
     rho = rho_0.copy()
-    max_iter = 50
+    max_iter = 100
     #Picard iteration for solving the non-linear problem for \rho^{n+1}
     for k in range(max_iter):
 
@@ -272,9 +272,9 @@ for n in range(num_steps):
 
         rho = rho_new
     def G(r):
-        return r - rho_0 + F(r)
+         return r - rho_0 + F(r)
     
-    rho = anderson(G, rho, 2, 0.9, maxiter=50, f_tol=1e-12)
+    rho = anderson(G, rho, 2, 0.9, maxiter=100, f_tol=1e-12)
     #rho -= np.mean(rho) - np.mean(rho_0)
     rho_per = per_bd(rho, nghost)
     rho_init_per = per_bd(rho_init, nghost)
@@ -291,21 +291,21 @@ tv = np.empty(len(rho_init)+1, dtype=rho_init.dtype)
 tv[1:-1] = (rho_init[1:] - rho_init[:-1])/(cell_size * 0.5 * (rho_init[0] + rho_init[-1]))          # normal differences
 tv[0] = (rho_init[0] - rho_init[-1])/(cell_size * 0.5 * (rho_init[0] + rho_init[-1]))                # left wrap
 tv[-1] = (rho_init[0] - rho_init[-1])/(cell_size * 0.5 * (rho_init[0] + rho_init[-1]))               # right wrap to close periodicity
-ax.plot(x_prim, rho_0, label=r"$\rho$, T_final")
-ax.plot(x_dual, w_0, label=r"$w$, T_final")
+#ax.plot(x_prim, rho_0, label=r"$\rho$, T_final")
+#ax.plot(x_dual, w_0, label=r"$w$, T_final")
 #ax.plot(x_dual, v_init, label=r"$v$, T_final")  
 u = w_0 + kappa * nu * v_init
-ax.plot(x_dual, u, label=r"$u$, T_final")
-ax.plot(x_dual, v_init, label=r"$v$, T_final")
-ax.plot(x_dual, tv, label=r"$\tilde{v}$, T_final")
-ax.legend()
-L1_tot_final = np.sum(rho_0)
-error_tot = L1_tot - L1_tot_final
-print(np.abs(error_tot)) 
-print(L1_tot_final)
-error_v = v_init - tv
-norm_error_v = math.sqrt(cell_size) * np.abs(error_v)
-print("error_v:", norm_error_v)
+# ax.plot(x_dual, u, label=r"$u$, T_final")
+# ax.plot(x_dual, v_init, label=r"$v$, T_final")
+# ax.plot(x_dual, tv, label=r"$\tilde{v}$, T_final")
+# ax.legend()
+# L1_tot_final = np.sum(rho_0)
+# error_tot = L1_tot - L1_tot_final
+# print(np.abs(error_tot)) 
+# print(L1_tot_final)
+# error_v = v_init - tv
+# norm_error_v = math.sqrt(cell_size) * np.abs(error_v)
+# print("error_v:", norm_error_v)
 #print("L2_error_v:", L2_error_v)
 T_f = num_steps * dt
 print("Final T:", T_f)
