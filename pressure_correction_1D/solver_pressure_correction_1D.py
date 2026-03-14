@@ -94,7 +94,7 @@ nu = 1.0
 gamma = 2.0
 rho_initial_condition = fv.initial_condition.gaussian_rho
 u_initial_condition = fv.initial_condition.constant_u
-case = fv.computational_case(a = -3.0, b = 3.0, Tf = 0.5, N = 1000, dt = 0.001, ng = 1)
+case = fv.computational_case(a = -1.0, b = 1.0, Tf = 0.5, N = 100, dt = 0.01, ng = 1)
 "-------initialization of the scheme--------------"
 a = case.a
 b = case.b
@@ -153,8 +153,9 @@ A = p_linsolv(w_0, lda, c, neg, pos)
 #------------Solving for rho^0 from the corresponding linear problem--------------------------------------------------
 rho_0 = spm.spsolve(A, rho_init)
 #v_0 = np.array([((rho_0[i+1]- rho_0[i])/(cell_size * 0.5 * (rho_0[i+1] + rho_0[i]))) for i in range(0,N-1)])
-ax.plot(x_prim, rho_0, label=r"$\rho^0$, lin_solve")
-ax.legend()
+#ax.plot(x_prim, rho_0, label=r"$\rho^0$, lin_solve")
+#ax.plot(x_dual, v_0, label=r"$v^0$")
+#ax.legend()
 
 d_linsolv = fv.solver_assembly.dual_linsolv
 d_linsolv_dif = fv.solver_assembly.dual_linsolv_dif
@@ -165,7 +166,7 @@ print(L1_tot)
 #------------------------
 """Time-looping begins"""
 #------------------------
-num_steps = 0
+num_steps = 1
 for n in range(num_steps):
     #Compute dual average of the discrete mass on the DUAL CELLS
     # rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
@@ -270,10 +271,10 @@ for n in range(num_steps):
             break
 
         rho = rho_new
-    def G(r):
-         return r - rho_0 + F(r)
+    # def G(r):
+    #      return r - rho_0 + F(r)
     
-    rho = anderson(G, rho, 2, 0.9, maxiter=100, f_tol=1e-12)
+    # rho = anderson(G, rho, 2, 0.9, maxiter=100, f_tol=1e-12)
     #rho -= np.mean(rho) - np.mean(rho_0)
     rho_per = per_bd(rho, nghost)
     rho_init_per = per_bd(rho_init, nghost)
