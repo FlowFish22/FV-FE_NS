@@ -12,7 +12,7 @@ TODO: description of what you do in some details, with link to relevant docs.
 
 The repository is organized as follows:
 
-`demo/` Demonstration codes, which rely on the `finite_volume` package.
+`pressure_correction_1D/` contains the script implrmrnting a 1D pressure-correction scheme, which rely on the `finite_volume` package.
 
 `src/finite_volume/finite_volume.py` Provides the `finite_volume` package. 
 
