@@ -14,7 +14,7 @@ The repository is organized as follows:
 
 `demo/` Demonstration codes, which rely on the `finite_volume` package.
 
-`src/finite_volume` Provides the `finite_volume` package. 
+`src/finite_volume/finite_volume.py` Provides the `finite_volume` package. 
 
 ## Development
 
