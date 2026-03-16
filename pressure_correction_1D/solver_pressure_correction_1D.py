@@ -92,7 +92,7 @@ tf = 2.0
 kappa = 1.0
 nu = 0.1
 gamma = 2.0
-rho_initial_condition = fv.initial_condition.gaussian_rho
+rho_initial_condition = fv.initial_condition.constant_rho
 u_initial_condition = fv.initial_condition.constant_u
 case = fv.computational_case(a = -3.0, b = 3.0, Tf = 0.5, N = 100, dt = 0.0001, ng = 1)
 "-------initialization of the scheme--------------"
@@ -165,7 +165,7 @@ print(L1_tot)
 #------------------------
 """Time-looping begins"""
 #------------------------
-num_steps = 10000
+num_steps = 1000
 for n in range(num_steps):
     #Compute dual average of the discrete mass on the DUAL CELLS
     # rho_init_d = np.array([(0.5 * (rho_init[i+1]+rho_init[i])) for i in range(0,N-1)])
